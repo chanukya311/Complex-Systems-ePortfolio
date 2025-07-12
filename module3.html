@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Item 1</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="templateLoader.js"></script>
+    <script src="comments.js"></script>
+</head>
+<body>
+    <div id="header"></div>
+    <div id="nav"></div>
+
+    <main class="module-body">
+        <div class="dataset-description">
+<h1>Self-Organization & Emergence in The Stock Market</h1>
+
+        <h1 id="sec:introduction">Introduction</h1>
+<p>In this module, emergence and self-organization is discussed in the
+context of complex systems, specifically in the context of the stock
+market of the last five years.</p>
+<h2 id="what-is-emergence-self-organization">What is emergence &amp;
+self organization?</h2>
+<p>Emergence is the concept of describing how a pattern property at
+system level appears and that it cannot be directly inferred from the
+behavior of individual components. Only when looked at when all local
+interactions are taken together, do new structures and patterns appear
+(emerge) <span class="citation" data-cites="camazine2001self">(Camazine
+et al. 2001)</span>. Self-organization is the concept of those emergent
+patterns form spontaneously, without any central control <span
+class="citation" data-cites="camazine2001self">(Camazine et al.
+2001)</span>. Individual agents follow simple, local rules, or
+interactions and yet the entire system organizes itself into self-made
+structures. In complex systems, emergence and self organization explain
+how collective behavior arises from individual decisions and how the
+system adapts to changing conditions <span class="citation"
+data-cites="camazine2001self">(Camazine et al. 2001)</span></p>
+<h2 id="dataset-used">Dataset used</h2>
+<p>We used the "Massive Yahoo Finance Dataset" from Kaggle <span
+class="citation"
+data-cites="iveeaten3223times_massive_yahoo_finance_dataset">(iveeaten3223times
+2019)</span>, which contains five years of daily OHLCV data from almost
+all the S&amp;P 500 stocks. A deep explanation on how the dataset is set
+up with all the details is written in the introduction of this
+E-Portfolio. Financial markets are a classic example of a
+self-organizing system. It includes local interactions, where traders
+react individually to news and price movements. It also shows emergent
+patterns, due to sector rotations, broad market rallies or crashes that
+cannot be predicted from any single stock alone<span class="citation"
+data-cites="sornette2003why">(Sornette 2003)</span>, <span
+class="citation" data-cites="mantegna1999hierarchical">(Mantegna
+1999)</span>.</p>
+<h1 id="methods">Methods</h1>
+<p>The first step was the pre-processing of the dataset. The Date column
+was parsed into a proper DataTime index, pivoting to a table of close
+prices for each stock by date, and computing daily returns via
+percentage change. By converting to returns, it strips out any long-term
+price trends and focuses on the co-movement that underlies the emergent
+market structure.</p>
+<p>The second step was to capture how the market structure evolves. A
+rolling-window network approach was used to capture this. The window was
+set at 60 trading days, advancing by 5 days each time, and in each
+window the Pearson’s correlation matrix of returns was calculated.</p>
+<p>After the 60 day windows were computed, a graph was built by placing
+an threshold between two stocks whenever their correlation exceeded 0,7.
+This threshold was set to ensure the focus on the strongest pairwise
+interaction that drive true emergent clusters <span class="citation"
+data-cites="onnela2003dynamics">(Onnela et al. 2003)</span>, while the
+rolling window reflects the market’s dynamics, allowing the clusters to
+form, dissolve and re-form as conditions change.</p>
+<p>On each thresholded network, a greedy modularity algorithm was run to
+detect communities in the stock market <span class="citation"
+data-cites="blondel2008fast">(Blondel et al. 2008)</span>. For every
+window the following three parameters were recorded: the sizes of the
+top three communities, the global modularity score, and the average
+clustering coefficient. Tracking both modularity and clustering allowed
+to distinguish when the market organizes into few well defined camps
+versus when tight local communities dominate.</p>
+<p>Finally, the dynamics were visualized into two ways: a time-series
+plots of community sizes, modularity and clustering coefficient to
+pinpoint when emergent structures strengthen or collapse and an alluvial
+(Sankey) diagram for key market regimes, like the COVID crash, to show
+how individual stocks migrate between communities across windows. These
+visualizations make the processes of emergence and self-organization
+visible and traceable in the data.</p>
+<h1 id="results">Results</h1>
+<p>After doing the analysis: how the market evolves, 60-day window and
+the modularity and clustering coefficient, several plots were
+constructed to visualize the (possible) emergent and self organization
+behavior of the stock data.</p>
+<p>Figure 1 presents the daily closing prizes of AAPL, MSFT, GOOGL, AMZN
+and NVDA over a five year period. In 2019 and early 2020, the five
+stocks had a steady bull run, in February/march 2020, this bull run
+plummeted with 30 to 40 % in weeks, due to the COVID crash. In November
+2021 a new bull market emerged, especially by NVDA and AMZN. There was a
+correction in early 2022 and a gradual recovery in late 2023. These
+price regimes form the backdrop for the network reconfigurations that
+are analyzed below.</p>
+<figure id="fig:enter-label">
+<img src="module3_images/Screenshot 2025-05-11 at 09.41.16.png" style="width:50.0%" />
+<figcaption>Figure 1: Plot of AAPL MSFT GOOGL AMZN NVDA over 5-year
+window</figcaption>
+</figure>
+<p>In figure 2, the top three community sizes of the 60-day window are
+illustrated. In early 2019, the dominant community contained between
+80-120 stocks, the second community about 50-70 and the smallest
+community about 24-40 stocks. Early 2019 reflects a sectorization in a
+calm market. When the COVID crash begon, the largest community grew to
+approximately 250 stocks, which demonstrates that extreme stress drives
+a broad synchronization among stocks. The weeks following the crash, the
+largest community plummeted back to 60-80 stocks, while the second and
+third community grew to 80-120 stocks. During the bull market in 2020
+and 2021, the dominant community built over 200 stocks.</p>
+<figure id="fig:enter-label">
+<img src="module3_images/Screenshot 2025-05-06 at 13.32.55.png" style="width:50.0%" />
+<figcaption>Figure 2: Top three community sizes over time</figcaption>
+</figure>
+<p>To visualize how individual stocks migrate between emergent
+communities, the alluvial plot is demonstrated. Figure 3 to 7 present
+these alluvial plots for four key regimes. Figure 4
+(recovery 22-23), the ribbons show again straight flowing communities,
+marking the stabilization of emergent communities in the recovery phase
+of the COVID crash. Figure 5 (Bull Market) shows nearly straight parallel ribbons across the
+windows, which reflect a stable, calm regime. In figure 6 ( 2022
+correction), new clusters take shape in mid 2022. Finally, figure 7 (COVID crash) shows the ribbons from all prior communities converge into a single block by
+early March 2020, they later divide into multiple communities. This
+shows the autonomous collapse and reconstruction of the network.</p>
+<figure id="fig:enter-label">
+<iframe src="module3_images/Alluvial plot_ Flow of stocks among top 3 communities over time.html" width="900" height="500" scrolling="no"></iframe>
+<figcaption>Figure 3: Alluvial plot: flow of stocks among top three communities
+over time</figcaption>
+</figure>
+<figure id="fig:enter-label">
+<iframe src="module3_images/Alluvial plot.html" width="900" height="500" scrolling="no"></iframe>
+<figcaption>Figure 4: Alluvial plot: recovery crash 2022-2023</figcaption>
+</figure>
+<figure id="fig:enter-label">
+<iframe src="module3_images/alluvial_2_Bull_Market.html" width="900" height="500" scrolling="no"></iframe>
+<figcaption>Figure 5: Alluvial plot: bull market</figcaption>
+</figure>
+<figure id="fig:enter-label">
+<iframe src="module3_images/alluvial_3_2022_Correction.html" width="900" height="500" scrolling="no"></iframe>
+<figcaption>Figure 6: Alluvial plot: 2022 correction</figcaption>
+</figure>
+<figure id="fig:enter-label">
+<iframe src="module3_images/alluvial_1_COVID_Crash.html" width="900" height="500" scrolling="no"></iframe>
+<figcaption>Figure 7: Alluvial plot: COVID crash</figcaption>
+</figure>
+<p>In figure 8, the modularity (blue) and clustering coefficient
+(orange) over time is displayed over the same windows of 60 days. There
+are periods of high modularity, around 0.75-0.85 in mid 2020 and again
+in late 2022-2023, together with a low clustering coefficient,
+indicating the spontaneous emergence of a few separated communities. On
+contrast, during periods of extreme stress like the COVID crash and the
+2022 correction, the clustering coefficient spikes to 0.6-0.8 while the
+modularity plummets down to 0.2-0.3. This means that in that context,
+almost every pair of neighboring stocks forms a triangle, there is no
+clear global partition.</p>
+<p>In self-organizing systems like financial markets, large, well
+defined clusters and tight local connections are mutually exclusive. As
+clear global communities emerge, small cohesive groups weaken, and as
+local cohesion grows stronger, global structure weakens.</p>
+<figure id="fig:enter-label">
+<img src="module3_images/Screenshot 2025-05-06 at 13.33.16.png" style="width:50.0%" />
+<figcaption>Figure 8: Modularity and clustering coefficient over time</figcaption>
+</figure>
+<h1 id="discussion-conclusion">Discussion &amp; Conclusion</h1>
+<h2 id="discussion">Discussion</h2>
+<p>This analysis demonstrates how financial markets exhibit both
+emergence and self-organization through the dynamic play between various
+tickers of various communities. During periods of volatility, like the
+COVID-19 crash and the 2022 correction, the average clustering
+coefficient is high, as nearly every stock forms tight, overlapping
+"triangles" of high correlation. Simultaneously, modularity is low
+because the market behaves as one block rather than a collection of
+distinct sectors. On the other hand, in calmer markets, the network
+self-organizes into a few well-separated communities: clear sector-like
+clusters emerge and modularity is high.</p>
+<p>The contrast of high modularity and a low clustering coefficient in
+calm markets and vice versa illustrates a hallmark of complex systems:
+without any central coordinator, local interactions alone produce
+coherent macro patterns. However, this method also reveals important
+limitations. The choice of a fixed 60-day window and a 0.7 correlation
+threshold strongly shapes the size and stability of detected
+communities. Pearson correlation ignores nonlinear dependencies, and
+greedy modularity can miss small, but meaningful sub clusters. This is
+because the modularity function has a built-it "resolution limit": it
+tends to merge small groups into larger ones when the overall network is
+large, making fine-grained structures invisible <span class="citation"
+data-cites="fortunato2007resolution">(Fortunato and Barthélemy
+2007)</span>.</p>
+<p>In future research, other nonlinear methods can be used to
+demonstrate the emergence and self-organizational characteristics of the
+network that add to the proven linear emergence and self-organization in
+this E-portfolio module.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this E-portfolio module, the rolling window correlation networks,
+community detection and complementary network metrics were used on the
+Yahoo finance dataset. Large, well-defined markets sectors emerge
+spontaneously when volatility is low, and these sectors autonomously
+fragment into tightly connected local pockets under stress. The alluvial
+plots (figure ... till ...) made the migration of individual stocks
+between clusters explicit, illustrating the self-organizing aspect of
+the market structure in response to crashes. Together, these findings
+provide a clear, illustration of emergence and self-organization, while
+also highlighting the importance of more nuanced, adaptive network
+approaches.</p>
+
+<h1>References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent"
+data-entry-spacing="0" role="list">
+<div id="ref-blondel2008fast" class="csl-entry" role="listitem">
+Blondel, Vincent D., Jean-Loup Guillaume, Renaud Lambiotte, and Etienne
+Lefebvre. 2008. <span>“Fast Unfolding of Communities in Large
+Networks.”</span> <em>Journal of Statistical Mechanics: Theory and
+Experiment</em>, no. 10: P10008. <a
+href="https://doi.org/10.1088/1742-5468/2008/10/P10008">https://doi.org/10.1088/1742-5468/2008/10/P10008</a>.
+</div>
+<div id="ref-camazine2001self" class="csl-entry" role="listitem">
+Camazine, Steven, Jean-Louis Deneubourg, Nigel R. Franks, James Sneyd,
+Guy Theraulaz, and Eric Bonabeau. 2001. <em>Self-Organization in
+Biological Systems</em>. Princeton, NJ: Princeton University Press.
+</div>
+<div id="ref-fortunato2007resolution" class="csl-entry" role="listitem">
+Fortunato, Santo, and Marc Barthélemy. 2007. <span>“Resolution Limit in
+Community Detection.”</span> <em>Proceedings of the National Academy of
+Sciences</em> 104 (1): 36–41. <a
+href="https://doi.org/10.1073/pnas.0605965104">https://doi.org/10.1073/pnas.0605965104</a>.
+</div>
+<div id="ref-iveeaten3223times_massive_yahoo_finance_dataset"
+class="csl-entry" role="listitem">
+iveeaten3223times. 2019. <span>“Massive Yahoo Finance Dataset.”</span>
+Kaggle, <a
+href="https://www.kaggle.com/datasets/iveeaten3223times/massive-yahoo-finance-dataset"
+class="uri">https://www.kaggle.com/datasets/iveeaten3223times/massive-yahoo-finance-dataset</a>.
+</div>
+<div id="ref-mantegna1999hierarchical" class="csl-entry"
+role="listitem">
+Mantegna, Rosario N. 1999. <span>“Hierarchical Structure in Financial
+Markets.”</span> <em>The European Physical Journal B</em> 11 (1):
+193–97. <a
+href="https://doi.org/10.1007/s100510050929">https://doi.org/10.1007/s100510050929</a>.
+</div>
+<div id="ref-onnela2003dynamics" class="csl-entry" role="listitem">
+Onnela, J.-P., A. Chakraborti, K. Kaski, and J. Kertész. 2003.
+<span>“Dynamics of Market Correlations: Taxonomy and Portfolio
+Analysis.”</span> <em>Physical Review E</em> 68: 056110. <a
+href="https://doi.org/10.1103/PhysRevE.68.056110">https://doi.org/10.1103/PhysRevE.68.056110</a>.
+</div>
+<div id="ref-sornette2003why" class="csl-entry" role="listitem">
+Sornette, Didier. 2003. <em>Why Stock Markets Crash: Critical Events in
+Complex Financial Systems</em>. Princeton, NJ: Princeton University
+Press.
+</div>
+</div>
+</div>
+        
+        
+        
+        <div class="dataset-description">
+            <div id="comments"></div>
+        </div>
+    </main>
+
+    <div id="footer"></div>
+</body>
+</html>

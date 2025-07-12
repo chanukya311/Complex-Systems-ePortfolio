@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Item 1</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="templateLoader.js"></script>
+    <script src="comments.js"></script>
+    <script type="text/javascript" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+</head>
+<body>
+    <div id="header"></div>
+    <div id="nav"></div>
+
+<main class="module-body">
+    <div class="dataset-description">
+<h1>Uncovering Complex Dynamics</h1>
+
+<h1 id="connection-to-course-learning-objectives">Connection to Course
+Learning Objectives</h1>
+<p>Financial markets behave as complex systems with nonlinear
+interactions and feedback loops. Traditional models often assume simple
+or random behavior, however real market dynamics can be more intricate.
+In these series of modules we will mainly analyze the GOOGL’s daily
+stock price using concepts from nonlinear dynamics, such as state space
+and attractors in this module, in order to explore whether the data
+reveals any underlying dynamic pattern.</p>
+<p>We treat GOOGL’s stock price time series as an observable of an
+underlying complex system (the company and its investors). These
+aggregate variables can serve as an order parameter that captures the
+system’s state. Here the stock price is assumed to reflect the
+collective behavior of investors and the company’s performance, making
+it a proxy for the system’s state. This approach allows us to explore
+whether the stock exhibits signs of nonlinear dynamic structure (such as
+a tendency toward an equilibrium or a recurring cycle) or if it behaves
+more like a purely stochastic process.</p>
+<p>Our analysis involves reconstructing the system’s phase space from
+the single variable time series and looking for indications of
+attractors. A state space is the mathematical space of all possible
+states of a system <span class="citation"
+data-cites="Abraham1992">(Abraham and Shaw 1992)</span>. BY plotting the
+evolution of the stock in this space we obtain a visual phase portrait
+of its dynamics. More specifically, we plot the stock price against its
+recent change (daily return), which serves as a two-dimensional
+representation of the system’s state at each moment. If the stock’s
+dynamics have a low-dimensional deterministic structure, the trajectory
+in state space may converge to a geometric shape such as a point or a
+cycle, i.e. an attractor that characterizes long-term behavior. On the
+other hand, if movements are dominated by high-dimensional factors or
+noise, the phase portrait may appear diffuse and not settle into any
+simple pattern <span class="citation"
+data-cites="Abraham1992 Butner2015">(Abraham and Shaw 1992; Butner et
+al. 2015)</span>.</p>
+<p>We initially considered computing Lyapunov exponents (quantitative
+measures of chaos) for this time series, but we decided to focus on
+qualitative geometric analysis instead. Lyapunov exponent estimation
+would have required long, stationary data and is beyond our scope.
+Instead we used visual tools to identify any qualitative signatures of
+nonlinearity or stability in the stock’s behavior.</p>
+
+<p>State Space Reconstruction: To analyze the dynamics, we reconstructed
+a two-dimensional state space from the one-dimensional time series. One
+axis of the state space is the stock price <span
+class="math inline"><em>x</em>(<em>t</em>)</span> itself, and the other
+axis is the discrete time derivative (daily change) <span
+class="math inline"><em>Δ</em><em>x</em>(<em>t</em>) = <em>x</em>(<em>t</em> + 1) − <em>x</em>(<em>t</em>)</span>.
+Thus, each day is represented by a point <span
+class="math inline">(<em>x</em>(<em>t</em>), <em>Δ</em><em>x</em>(<em>t</em>))</span>,
+capturing the state (price) and its velocity (overnight change).
+Plotting all such points and connecting successive ones yields a
+trajectory that shows how the system moves from one state to the next
+over time. This construction is analogous to phase-space analysis in
+physics <span class="citation" data-cites="Abraham1992">(Abraham and
+Shaw 1992)</span>. By using price change as the second dimension, we
+treat the stock price like a dynamical variable with momentum, which can
+help reveal tendencies such as stability or cycles in the price
+evolution.</p>
+<p>Vector Field and Density Plot: We plotted arrows between successive
+state points to visualize state transitions and overlaid a 2D density
+contour to highlight frequently visited regions <span class="citation"
+data-cites="Butner2015">(Butner et al. 2015)</span>. The resulting
+vector density plot serves as our phase portrait.</p>
+<p>All analysis and plotting were done in R. The key steps are
+documented in the code blocks below.</p>
+<h1 id="loading-the-required-libraries">Loading the Required
+Libraries</h1>
+<p>To perform our analysis we loaded several R libraries:</p>
+<pre><code>library(Hmisc)
+library(grid)
+library(ggplot2)
+library(moments)
+library(e1071)
+library(rgl)
+library(nonlinearTseries)
+library(lubridate)</code></pre>
+<p>The libraries included several statistical functions, visualization
+tools, and time-series analysis capabilities.</p>
+<h1 id="loading-and-filtering-data">Loading and Filtering Data</h1>
+<p>We begin by loading the dataset and isolating GOOGL stock:</p>
+<pre><code>df &lt;- read.csv(&#39;stock_details_5_years.csv&#39;)
+df_googl &lt;- df[df$Company == &quot;GOOGL&quot;, ]
+df_googl</code></pre>
+<p>This results in a dataset containing the daily stock price details
+for GOOGL. We have chosen to only use GOOGL for this analysis since it
+has been one of the biggest companies for a significant amount of time,
+and this made it a suitable candidate for studying stock market
+dynamics. The extensive trading volume and historical data availability
+allow for an extensive statistical analysis, which makes it easier to
+detect trends, volatility shifts, and potential nonlinear behaviours in
+the stock price movements. Furthermore, GOOGL’s presence across various
+economic cycles provides a comprehensive dataset for exploring both
+short-term fluctuations and long-term structural changes in the
+market.</p>
+<h1 id="visualizing-opening-prices-over-time">Visualizing Opening Prices
+Over Time</h1>
+<p>Time-series data, such as stock prices, often exhibit trends, cycles,
+and volatility <span class="citation" data-cites="box1976">(Box and
+Jenkins 1976)</span>. To gain an initial understanding, we plot the time
+series of opening prices. This allows us to observe potential trends
+over time and identify any recurring cycles. This may provide valuable
+insights into the underlying dynamics of GOOGL’s stock as can be seen in
+Figure <a href="#fig:Opening Prices" data-reference-type="ref"
+data-reference="fig:Opening Prices">1</a>.</p>
+<pre><code>ts.plot(df_googl$Open, xlab=&quot;Time&quot;, ylab = &#39;GOOGL Opening Prices&#39;)</code></pre>
+<figure id="fig:Opening Prices">
+<img src="module4_images/Googl Opening Prices.png" style="width:50.0%" />
+<figcaption>Figure 1: GOOGL Opening Prices</figcaption>
+</figure>
+<h1 id="examining-price-changes">Examining Price Changes</h1>
+<p>This figure shows the daily opening prices of GOOGL over the analyzed
+period. The stock exhibits an overall upward trend (reflecting the
+company’s growth) punctuated by episodes of volatility and occasional
+sharp drops. The price clearly does not stay at any fixed level, but
+moves through different regimes in response to market conditions.</p>
+<pre><code>Open_diff &lt;- diff(df_googl$Open, lag = 1)
+plot(Open_diff, type=&#39;l&#39;, xlab = &quot;Time in day increments&quot;,
+ylab =&quot;Change in Opening Price&quot;,
+main = &quot;Average Change in Open Price Over Time&quot;)</code></pre>
+<figure id="fig:change">
+<img src="module4_images/Average Change.png" style="width:50.0%" />
+<figcaption>Figure 2: Change Over Time</figcaption>
+</figure>
+<h1 id="distribution-of-price-changes">Distribution of Price
+Changes</h1>
+<p>Understanding the distribution of price changes is crucial in
+financial modelling. The normality of returns is a key assumption in
+classical financial theory <span class="citation"
+data-cites="fama1970">(Fama 1970)</span>, but empirical studies often
+find deviations, such as skewness and heavy tails <span class="citation"
+data-cites="cont2001">(Cont 2001)</span>. We analyse the density of
+price differences. The density plot is shown in Figure <a
+href="#fig:densityplot" data-reference-type="ref"
+data-reference="fig:densityplot">3</a>.</p>
+<pre><code>diff_open &lt;- diff(df_googl$Open, lag = 1, differences = 1)
+mean_diff &lt;- mean(diff_open, na.rm = TRUE)
+plot(density(diff_open, na.rm = TRUE), main = &quot;Density of First Differences in Open Price&quot;,
+xlab = &quot;First Differences&quot;, ylab = &quot;Density&quot;)
+abline(v = mean_diff, col = &quot;red&quot;, lwd = 2, lty = 2)</code></pre>
+<figure id="fig:densityplot">
+<img src="module4_images/Density plot.png" style="width:50.0%" />
+<figcaption>Figure 3: Density plot</figcaption>
+</figure>
+<h1
+id="reconstructing-the-phase-space-attractor-dynamics">Reconstructing
+the Phase Space: Attractor Dynamics</h1>
+<figure id="fig:vector density">
+<img src="module4_images/Vector Density plot.png" style="width:50.0%" />
+<figcaption>Figure 4: Vector Density Plot of GOOGL Opening Prices</figcaption>
+</figure>
+<p>The reconstructed phase portrait of GOOGL is presented in Figure <a
+href="#fig:vector density" data-reference-type="ref"
+data-reference="fig:vector density">4</a>, the vector density plot. In
+this figure, the horizontal axis is the stock price <span
+class="math inline"><em>x</em>(<em>t</em>)</span> and the vertical axis
+is the one-day price change <span
+class="math inline"><em>Δ</em><em>x</em>(<em>t</em>)</span>. Each point
+represents the state of the system on a given day, and arrows indicate
+the transition to the next day’s state. Darker regions (higher point
+density) highlight where the system’s state occurs most frequently.</p>
+<p>Figure <a href="#fig:vector density" data-reference-type="ref"
+data-reference="fig:vector density">4</a> reveals that the majority of
+points lie near the horizontal line <span
+class="math inline"><em>Δ</em><em>x</em> = 0</span>, especially in the
+mid-range of prices. In other words, small day-to-day changes (both up
+and down) are the most common behavior for this stock. The high density
+of states along <span
+class="math inline"><em>Δ</em><em>x</em> ≈ 0</span> indicates that the
+price often experiences little net change from one day to the next,
+reflecting short-term stability or inertia in the absence of major
+disturbances.</p>
+<p>Notably, we do not observe a single narrow cluster or closed-loop
+trajectory that would indicate a clear attractor such as a fixed point
+or limit cycle. Instead, the points and vectors are spread over a broad
+region of the state space. There is no convergence of the trajectory to
+any particular price level that would serve as an equilibrium attractor;
+the stock does not gravitate toward a constant long-term value.
+Likewise, there is no repeating cyclical pattern visible, a limit cycle
+would appear as a loop in the plot, and none is present. The trajectory
+covers a wide range of prices rather than orbiting within a bounded
+cycle. This suggests that GOOGL’s price dynamics do not have a
+low-dimensional deterministic attractor governing them.</p>
+<p>We do see some state-dependent patterns, for instance, when the price
+reaches an extreme high or low relative to its recent history, the
+subsequent change tends to be larger and often opposite in direction
+(e.g., very high prices are sometimes followed by negative returns, and
+vice versa). This hint of mean-reversion at the extremes implies a
+nonlinear tendency for the stock to correct when it moves far from its
+prior range. However, these corrections are not sufficient to create a
+confined basin of attraction; they simply show that the system slows
+down or reverses when reaching unusual states. Overall, the phase space
+portrait appears diffuse and lacks a focal structure, which is
+consistent with the idea that the stock’s movements are influenced by
+many external factors (news, market trends, etc.) and considerable
+randomness. In short, the visual analysis points to high-dimensional or
+stochastic dynamics rather than a simple repeating pattern.</p>
+<h1 id="discussion">Discussion</h1>
+<p>The absence of a simple attractor in GOOGL’s phase space suggests
+that its price dynamics are largely driven by a combination of factors
+and noise, rather than by a low-dimensional deterministic system,
+consistent with the view of financial markets as complex adaptive
+systems in which there is no fixed equilibrium or cycle. This finding
+aligns with theoretical expectations for one-dimensional dynamics. A
+single-variable system cannot exhibit sustained oscillations or chaos
+without additional degrees of freedom <span class="citation"
+data-cites="Abraham1992">(Abraham and Shaw 1992)</span>. In GOOGL’s
+case, a fixed-point attractor (constant price) or a limit cycle (regular
+oscillation) do not exist, as expected in a one-variable system. Any
+deterministic attractor in the stock’s behavior is likely
+high-dimensional and thus would not be visible in our 2D analysis <span
+class="citation" data-cites="Butner2015">(Butner et al.
+2015)</span>.</p>
+<p>Even without a clear attractor, the phase portrait visualization
+proved insightful. Following the approach of <span class="citation"
+data-cites="Butner2015">Butner et al. (2015)</span>, we used this
+topological representation to identify qualitative features of the
+stock’s behavior. We observed that the price tends to stabilize (very
+small <span class="math inline"><em>Δ</em><em>x</em></span>) during
+normal periods and that extreme deviations are often followed by
+corrective moves. This state-dependent behavior <span class="citation"
+data-cites="AttractorSlides2024">(Wiltshire, Travis J. 2024)</span> is a
+nonlinear feature that linear models would not capture. It suggests that
+the system’s response depends on its current state: within normal price
+ranges, changes remain small, but at extreme prices, stronger forces
+push the price back toward the middle. This observation resonates with
+the attractor dynamics notion that sufficiently strong perturbations can
+induce a regime shift <span class="citation"
+data-cites="AttractorSlides2024">(Wiltshire, Travis J. 2024)</span> — in
+stock market terms, news can push the price into a new regime or
+trend.</p>
+<p>Although we did not compute a Lyapunov exponent, the qualitative
+evidence suggests GOOGL’s price is better characterized as a complex
+stochastic system rather than a low-dimensional chaotic one. The diffuse
+phase portrait and the price’s sensitivity to external events indicate
+that while some structure exists (e.g. the mild mean-reverting
+tendencies noted), it is of higher complexity than a simple
+deterministic attractor.</p>
+<p>In summary, applying nonlinear dynamics tools to GOOGL shows the
+value of a qualitative complex-systems perspective on financial data. We
+gained intuition about stability (short-term price inertia) and
+instability (sudden shifts) in the stock’s trajectory that complements
+traditional statistical analyses. These insights emphasize the
+qualitative dynamics of the data and underscore that even if markets do
+not have easily identifiable low-dimensional attractors, they still
+exhibit structured, state-dependent behavior characteristic of complex
+adaptive systems.</p>
+<h1 id="reflection">Reflection</h1>
+<p>This analysis of GOOGL’s stock illustrates on a micro level the same
+complexity principles that appear on a macro level in financial markets.
+In the broader context of this portfolio, it complements other
+components by showing that even an individual asset’s time series
+exhibits nonlinear patterns and state-dependent behaviors. For instance,
+while other modules might examine networks of stocks or market indices,
+here we focused on a single stock’s dynamics and still found signs of
+complex behavior. Together, these perspectives reinforce the notion that
+markets are highly dynamic across scales.</p>
+<p>By applying concepts like state space and attractors to real market
+data, this case study shows the value of qualitative dynamical analysis
+in finance. We gained intuition about stability (short-term equilibrium
+tendencies) and instability (sudden regime shifts) that aligns with
+broader market phenomena such as trends and corrections. Overall, this
+case study reinforces the course theme that financial markets can be
+analyzed as complex systems using nonlinear dynamics concepts.</p>
+
+<h1>References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent"
+data-entry-spacing="0" role="list">
+<div id="ref-Abraham1992" class="csl-entry" role="listitem">
+Abraham, Ralph H., and Christopher D. Shaw. 1992. <em>Dynamics: The
+Geometry of Behavior</em>. 2nd ed. Addison-Wesley.
+</div>
+<div id="ref-box1976" class="csl-entry" role="listitem">
+Box, G. E. P., and G. M. Jenkins. 1976. <em>Time Series Analysis:
+Forecasting and Control</em>. Holden-Day.
+</div>
+<div id="ref-Butner2015" class="csl-entry" role="listitem">
+Butner, Jonathan E., Kyle T. Gagnon, Michael N. Geuss, David A. Lessard,
+and T. Nathan Story. 2015. <span>“Utilizing Topology to Generate and
+Test Theories of Change.”</span> <em>Psychological Methods</em> 20 (1):
+1–25. <a
+href="https://doi.org/10.1037/a0037802">https://doi.org/10.1037/a0037802</a>.
+</div>
+<div id="ref-cont2001" class="csl-entry" role="listitem">
+Cont, R. 2001. <span>“Empirical Properties of Asset Returns: Stylized
+Facts and Statistical Issues.”</span> <em>Quantitative Finance</em> 1
+(2): 223–36.
+</div>
+<div id="ref-fama1970" class="csl-entry" role="listitem">
+Fama, E. F. 1970. <span>“Efficient Capital Markets: A Review of Theory
+and Empirical Work.”</span> <em>The Journal of Finance</em> 25 (2):
+383–417.
+</div>
+<div id="ref-yahoo_finance_dataset" class="csl-entry" role="listitem">
+Thomas, Sherry. 2023. <span>“Massive Yahoo Finance Dataset.”</span> <a
+href="https://www.kaggle.com/datasets/iveeaten3223times/massive-yahoo-finance-dataset">https://www.kaggle.com/datasets/iveeaten3223times/massive-yahoo-finance-dataset</a>.
+</div>
+<div id="ref-AttractorSlides2024" class="csl-entry" role="listitem">
+Wiltshire, Travis J. 2024. <span>“Attractor Dynamics Lecture Slides:
+Complex Systems Topology Module.”</span> PowerPoint presentation.
+</div>
+</div>
+</div>
+          <div class="dataset-description">
+            <div id="comments"></div>
+        </div>
+</main>
+
+    <div id="footer"></div>
+</body>
+</html>
