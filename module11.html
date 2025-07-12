@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Item 1</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="templateLoader.js"></script>
+    <script src="comments.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <div id="header"></div>
+    <div id="nav"></div>
+
+    <main class="module-body">
+       <div class="dataset-description">
+<h1>Multifractal Analysis of The Stock Market</h1>
+        <h1 id="connection-to-course-learning-objectives">Connection to Course
+Learning Objectives</h1>
+<p>Complex systems often exhibit scale‐invariant, fractal dynamics,
+meaning that fluctuations appear similar across a range of time scales.
+Such scaling behavior has been observed widely in physiology, human
+behavior, and natural phenomena – and is thought to confer adaptability
+and robustness. For example, <span class="citation"
+data-cites="Goldberger2002">Goldberger et al. (2002)</span> describe
+“fractal physiology” in which healthy dynamics (e.g. heartbeats, gait)
+show long-range correlations across scales. In contrast, loss of
+scale-invariance (e.g. narrow multifractal spectrum) accompanies
+pathology. In cognition and motor tasks, <span class="citation"
+data-cites="KeltyStephen2016">Kelty‐Stephen, Stirling, and Lipsitz
+(2016)</span> argue that multifractal temporal correlations reflect
+multiplicative interactions across scales and support flexible behavior
+“multifractality is the ‘gold standard’ evidence of interactions across
+scales”. By extension, financial markets as complex adaptive systems
+have also been found to exhibit fractal and multifractal statistics,
+challenging simple random-walk models. Indeed, multifractal behavior is
+common in stock markets, reflecting volatility clustering and
+heterogeneity of fluctuations.</p>
+<p>Multifractal detrended fluctuation analysis (MFDFA) is a model‐free
+method to quantify such scaling in nonstationary time series. It extends
+traditional DFA by computing fluctuation functions over a range of
+moments *q*, thereby capturing differences between large and small
+events. The outcome is a spectrum of scaling exponents that characterize
+how fluctuations of different magnitudes scale with window size. In this
+report we apply MFDFA to the closing‐price time series of Alphabet Inc.
+(GOOGL) to test for multifractality. This ties directly to course themes
+of fractals, scaling laws, and complex temporal dynamics, providing a
+concrete example of how multifractal structure can be assessed in
+real-world data.</p>
+<h1 id="loading-the-required-libraries">Loading the Required
+Libraries</h1>
+<p>To perform our analysis we loaded several R libraries:</p>
+<pre><code>system(&quot;which gfortran&quot;)
+install.packages(&quot;RcppArmadillo&quot;)
+install.packages(&quot;devtools&quot;)
+devtools::install_github(&quot;aaronlikens/fractalRegression&quot;)
+install.packages(&quot;fractalRegression&quot;)
+library(fractalRegression)</code></pre>
+<p>The libraries included several statistical functions, visualization
+tools, and time-series analysis capabilities.</p>
+<h1 id="loading-and-filtering-data">Loading and Filtering Data</h1>
+<p>We obtained the daily closing prices of GOOGL’s stock from Yahoo
+Finance, covering roughly <span class="math inline">1, 200</span>
+trading days (approximately five years of data). The raw time series is
+shown in Figure 1, this figure exhibits an overall upward trend, with
+periods of rapid increase and drawdown. Early values are around $50–$60,
+climbing to peaks above $140 (Figure 1). These features illustrate
+volatility clustering and non-stationarity typical of equity markets.
+The series length (<span class="math inline"><em>N</em> ≈ 1, 200</span>)
+is sufficient to probe scaling on scales from tens to hundreds of
+days.</p>
+<pre><code>df &lt;- read.csv(&#39;stock_details_5_years.csv&#39;)
+df_googl &lt;- df[df$Company == &quot;GOOGL&quot;, ]
+df_googl</code></pre>
+<p>For this analysis the closing prices of the stock market were
+used.</p>
+<pre><code>plot(df_googl$Close, type = &quot;l&quot;, lwd = 1, xlab = &quot;Time&quot;, ylab = &quot;Closing Price&quot;, main = &quot;GOOGL Time Series&quot;)</code></pre>
+<p>The distribution of the data is shown in Figure <a
+href="#fig:closing price" data-reference-type="ref"
+data-reference="fig:closing price">1</a>. The plot shows that the data
+is not normally distributed. Therefore, we normalise the data.</p>
+<pre><code># Mean Center
+df_googl$Close_Cent &lt;- as.numeric(scale(df_googl$Close, center = TRUE, scale = FALSE))
+
+# Interpolate missing values
+df_googl$Close_Cent &lt;- zoo::na.approx(df_googl$Close_Cent)
+
+# Make a plot
+plot(df_googl$Close_Cent, type=&quot;l&quot;, lwd=1,ylab=&quot;Closing Price&quot;, xlab=&quot;Time&quot;, main=&quot;GOOGL Closing Price Time Series Normalized&quot;)</code></pre>
+<h1 id="multifractal-detrended-fluctuation-analysis">MultiFractal
+Detrended Fluctuation Analysis</h1>
+<p>To prepare for MFDFA, we transformed the data to a stationary form.
+To be more specif, we subtracted the series mean (or initial value) and
+divided by the standard deviation, this yields a normalized series
+(Figure 2) with zero mean and unit variance. This removes the global
+trend and centers the fluctuations (MFDFA will further detrend local
+windows in later steps). The normalized series retains the original
+fluctuation pattern but oscillates around zero (Figure 2). No points
+were missing in the series, and no further filtering was applied. After
+normalization we proceed to the multifractal analysis described
+below.</p>
+<p>Down below we show how this could was build up and the results of the
+MFDFA plot are shown in Figure <a href="#fig:mfdfa"
+data-reference-type="ref" data-reference="fig:mfdfa">3</a>.: First the
+scale was calculated.</p>
+<pre><code>scales &lt;- logscale(scale_min = 16, scale_max = length(df_googl$Close_Cent)/4, scale_ratio = 2)</code></pre>
+<p>Once the scale was known, the MFDFA plots could be calculated.</p>
+<pre><code>set.seed(33)
+
+# Create surrogates
+surr.list &lt;- iaafft(df_googl$Close_Cent, N = 19)
+surr.mat &lt;- do.call(cbind, surr.list)
+
+# Combine original and surrogates
+combined.mat &lt;- cbind(df_googl$Close_Cent, surr.mat)
+
+# Run MFDFA
+mfdfa.combined &lt;- mfdfa(
+  x = combined.mat,
+  scale = scales,
+  q = -10:10,
+  order = 1,
+  scale_ratio = 2
+)
+
+# Create surrogate bands
+mfdfa.plot(mfdfa.combined, do.surrogate = TRUE, nsurrogates = 19)</code></pre>
+<p>MFDFA quantifies scale‐invariant structure by examining how the
+detrended fluctuations of the integrated series grow with window size
+for different moment orders <span class="math inline"><em>q</em></span>.
+The procedure is as follows:</p>
+<ol>
+<li><p><strong>Integration and Profile.</strong> Let <span
+class="math inline"><em>x</em><sub><em>t</em></sub></span> be the
+normalized time series of length <span
+class="math inline"><em>N</em></span>. Compute the <em>profile</em></p>
+<p>
+  \( Y(i) = \sum_{t=1}^{i}(x_t - \bar{x}) \)
+</p>
+<p>i.e. the cumulative sum of demeaned data.</p></li>
+<li><p><strong>Windowing and Detrending.</strong> For each scale <span
+class="math inline"><em>s</em></span> (window length), partition <span
+class="math inline"><em>Y</em></span> into <span
+class="math inline">⌊<em>N</em>/<em>s</em>⌋</span> non-overlapping
+segments. In every segment fit a least-squares polynomial trend (here
+linear, order 1) and compute the detrended variance.</p></li>
+<li><p><strong>Fluctuation Function.</strong> For each segment and each
+moment order <span class="math inline"><em>q</em></span>, compute the
+<span class="math inline"><em>q</em></span>-th-order fluctuation <span
+class="math inline"><em>F</em><sub><em>q</em></sub>(<em>s</em>)</span>
+by averaging the segment variances raised to the power <span
+class="math inline"><em>q</em>/2</span> and then taking the <span
+class="math inline">(1/<em>q</em>)</span>-th root. In practice we
+evaluate <span class="math inline"><em>q</em></span> over the range
+<span class="math inline">−5, −4, …, 4, 5</span>; negative <span
+class="math inline"><em>q</em></span> emphasize small fluctuations while
+positive <span class="math inline"><em>q</em></span> emphasize large
+ones.</p></li>
+<li><p><strong>Scaling Exponent.</strong> Repeat for multiple scales
+<span class="math inline"><em>s</em></span> (here <span
+class="math inline"><em>s</em> = 16</span> up to <span
+class="math inline"><em>s</em> = 1024</span> in logarithmically spaced
+steps). If the series exhibits fractal scaling, one expects <span
+class="math display"><em>F</em><sub><em>q</em></sub>(<em>s</em>) ∝ <em>s</em><sup><em>H</em>(<em>q</em>)</sup>.</span>
+Hence a plot of <span
+class="math inline">log <em>F</em><sub><em>q</em></sub></span> versus
+<span class="math inline">log <em>s</em></span> should be roughly
+linear, with slope <span
+class="math inline"><em>H</em>(<em>q</em>)</span> (the generalized Hurst
+exponent).</p></li>
+<li><p><strong>Multifractal Spectrum.</strong> From <span
+class="math inline"><em>H</em>(<em>q</em>)</span> compute the mass
+exponent <span
+class="math inline"><em>τ</em>(<em>q</em>) = <em>q</em><em>H</em>(<em>q</em>) − 1</span>
+and then obtain the singularity spectrum via a Legendre transform:</p>
+<p>
+  \( h = \frac{d\tau}{dq}, \quad D(h) = qh - \tau(q) \)
+</p>
+<p>A monofractal series gives <span
+class="math inline"><em>H</em>(<em>q</em>)</span> independent of <span
+class="math inline"><em>q</em></span> and a point-like <span
+class="math inline"><em>D</em>(<em>h</em>)</span>; a multifractal yields
+a varying <span class="math inline"><em>H</em>(<em>q</em>)</span> and a
+broad <span class="math inline"><em>D</em>(<em>h</em>)</span>.</p></li>
+</ol>
+<p>This procedure (implemented via the <code>mfdfa</code> function in
+<span class="sans-serif">R</span>) yields the set of scaling curves and
+exponents shown in Figure 3. The method is analogous to that of <span
+class="citation" data-cites="Kantelhardt2002">Kantelhardt et al.
+(2002)</span> and is described in detail by <span class="citation"
+data-cites="Ihlen2012">Ihlen (2012)</span>. In short, MFDFA decomposes
+the series’ fluctuations by scale and by magnitude, providing a spectrum
+of scaling exponents.</p>
+<figure id="fig:closing price">
+<img src="module11_images/Closing price.png" style="width:50.0%" />
+<figcaption>Figure 1: Closing price of GOOGL time series data</figcaption>
+</figure>
+<figure id="fig:closing price normalized">
+<img src="module11_images/Closing Price Normalized.png" style="width:50.0%" />
+<figcaption>Figure 2: Closing price of GOOGL time series data
+normalized</figcaption>
+</figure>
+<figure id="fig:mfdfa">
+<img src="module11_images/MFDFA.png" style="width:50.0%" />
+<figcaption>Figure 3: MFDFA plot of GOOGL closing prices </figcaption>
+</figure>
+<p>In the top-left panel, the <span
+class="math inline">log <em>F</em><sub><em>q</em></sub></span> versus
+<span class="math inline">log <em>s</em></span> curves for different
+<span class="math inline"><em>q</em></span> are roughly linear across
+scales (from <span
+class="math inline"><em>s</em> ≈ <em>e</em><sup>4</sup></span> to <span
+class="math inline"><em>e</em><sup>8</sup></span>), confirming power-law
+scaling. These curves are <em>not</em> parallel: large-<span
+class="math inline"><em>q</em></span> (positive) curves have smaller
+slopes than small-<span class="math inline"><em>q</em></span> (negative)
+curves. This indicates that large and small fluctuations scale
+differently.</p>
+<p>The top-right panel plots the generalized Hurst exponent <span
+class="math inline"><em>H</em>(<em>q</em>)</span>: it decreases from
+about <span class="math inline">1.6</span> at <span
+class="math inline"><em>q</em> = −10</span> to about <span
+class="math inline">1.25</span> at <span
+class="math inline"><em>q</em> = +10</span>. A constant <span
+class="math inline"><em>H</em></span> would be expected for a
+monofractal process; here the clear <span
+class="math inline"><em>q</em></span>-dependence of <span
+class="math inline"><em>H</em>(<em>q</em>)</span> signals
+multifractality.</p>
+<p>The bottom-left panel shows the exponent <span
+class="math inline"><em>τ</em>(<em>q</em>)</span> versus <span
+class="math inline"><em>q</em></span>. The curve is notably nonlinear
+(concave); for a monofractal <span
+class="math inline"><em>τ</em>(<em>q</em>)</span> would be linear in
+<span class="math inline"><em>q</em></span>.</p>
+<p>The bottom-right panel is the singularity spectrum <span
+class="math inline"><em>D</em>(<em>h</em>)</span> versus <span
+class="math inline"><em>h</em></span> (analogous to <span
+class="math inline"><em>f</em>(<em>α</em>)</span>). It forms a broad,
+convex shape peaking near <span
+class="math inline"><em>h</em> ≈ 1.5</span>, spanning roughly <span
+class="math inline"><em>h</em> = 1.1</span> to <span
+class="math inline"><em>h</em> = 1.9</span> (width <span
+class="math inline"> ≈ 0.8</span>–<span class="math inline">0.9</span>).
+This breadth quantifies the range of local Hurst exponents present: a
+wide spectrum is a hallmark of multifractal structure. In contrast, a
+narrow or delta-like spectrum would indicate monofractality.</p>
+<p>Thus all panels consistently show significant multifractality in the
+GOOGL series: different fluctuation magnitudes follow different
+power-law scaling. Quantitatively, the multifractal width <span
+class="math inline">max (<em>h</em>) − min (<em>h</em>) ≈ 0.9</span> is
+large, indicating strong heterogeneity in scaling, by comparison, purely
+monofractal noise would have near-zero width. This suggests that the
+stock’s returns incorporate a wide variety of timescales and persistence
+levels. In practical terms, it reflects that large price moves and small
+moves have different correlation structures. In financial terms, this
+relates to known volatility clustering and heavy tails. Hence, the GOOGL
+price series is not a simple fractal random walk but exhibits rich,
+multifractal complexity.</p>
+<h1 id="discussion">Discussion</h1>
+<p>The presence of multifractality has important implications for
+understanding financial complexity. It implies multiplicative,
+cascade-like interactions in the market dynamics, which go beyond what
+monofractal or linear models capture. In other words, the market
+fluctuations are influenced by processes operating at many interacting
+scales. This aligns with the “fractal market hypothesis” and with
+evidence that market returns have long-memory and varying volatility
+across scales.</p>
+<p>These findings tie directly to course themes of fractal scaling in
+complex systems. As <span class="citation"
+data-cites="Goldberger2002">Goldberger et al. (2002)</span> note, the
+lack of a characteristic scale can enhance system flexibility by
+preventing mode-locking to regular cycles. By analogy the multifractal
+nature of market dynamics may help the market adapt to shocks by
+blending short-term randomness and long-term trends. Our analysis
+complements other methods such as power-spectrum or autocorrelation
+analysis by explicitly characterizing how different fluctuation
+amplitudes scale. It also resonates with concepts from other modules,
+for example, DFA would yield a single Hurst exponent, whereas MFDFA
+reveals a whole spectrum, thus providing a richer view of temporal
+complexity.</p>
+<p>Detecting multifractality can inform modeling and prediction. It
+suggests that models should allow for long-range dependence and
+heteroskedasticity (e.g. GARCH or ARFIMA models with multi-scale
+components), rather than assuming independent increments. MFDFA itself
+can be complemented by surrogate testing or by related techniques like
+wavelet multifractal analysis. Overall, this method deepens our
+understanding of market time series as complex dynamical signals.</p>
+<h1 id="reflection">Reflection</h1>
+<p>In summary, the MFDFA of GOOGL closing prices reveals clear
+multifractal scaling. The generalized Hurst exponents vary with $q$ and
+the singularity spectrum is broad, indicating that small and large
+fluctuations have distinct scale-invariant properties. These findings
+reflect the intricate temporal structure of financial markets, which is
+consistent with the view that markets are complex systems with
+interactions across scales. The analyses also demonstrates that tools
+like MFDFA can quantify complexity in real-world signals, bridging
+theory and data.</p>
+<p>Reflecting on the method, MFDFA contributes to complex-systems
+analysis by providing a quantitative fingerprint of multi-scale
+variability. It connects to other course topics (e.g. entropy,
+correlation dimension, DFA) as one way to characterize nonlinearity and
+long-range dependence. Just as fractal analysis has been useful in
+physiology and behavior <span class="citation"
+data-cites="Goldberger2002 KeltyStephen2016">(Goldberger et al. 2002;
+Kelty‐Stephen, Stirling, and Lipsitz 2016)</span>, it proves useful in
+economics as well.</p>
+<p>In conclusion, MFDFA has elucidated the scale-free, multifractal
+nature of GOOGL price fluctuations. This underscores the general
+principle that complex temporal dynamics often lack a single scale and
+require multi-exponent descriptions. Such insights reinforce the
+importance of fractal and scaling analysis in our study of complex
+systems.</p>
+
+<h1>References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent"
+data-entry-spacing="0" role="list">
+<div id="ref-Goldberger2002" class="csl-entry" role="listitem">
+Goldberger, Ary L., Luis A. N. Amaral, Jeffrey M. Hausdorff, Plamen Ch.
+Ivanov, Chung‐Kang Peng, and H. Eugene Stanley. 2002. <span>“Fractal
+Dynamics in Physiology: Alterations with Disease and Aging.”</span>
+<em>Proceedings of the National Academy of Sciences</em> 99 (suppl 1):
+2466–72. <a
+href="https://doi.org/10.1073/pnas.012579499">https://doi.org/10.1073/pnas.012579499</a>.
+</div>
+<div id="ref-Ihlen2012" class="csl-entry" role="listitem">
+Ihlen, Espen A. F. 2012. <span>“Introduction to Multifractal Detrended
+Fluctuation Analysis in Matlab.”</span> <em>Frontiers in Physiology</em>
+3: 141. <a
+href="https://doi.org/10.3389/fphys.2012.00141">https://doi.org/10.3389/fphys.2012.00141</a>.
+</div>
+<div id="ref-Kantelhardt2002" class="csl-entry" role="listitem">
+Kantelhardt, Jan W., S. A. Zschiegner, E. Koscielny‐Bunde, Shlomo
+Havlin, Armin Bunde, and H. Eugene Stanley. 2002. <span>“Multifractal
+Detrended Fluctuation Analysis of Nonstationary Time Series.”</span>
+<em>Physica A: Statistical Mechanics and Its Applications</em> 316
+(1–4): 87–114. <a
+href="https://doi.org/10.1016/S0378-4371(02)01383-3">https://doi.org/10.1016/S0378-4371(02)01383-3</a>.
+</div>
+<div id="ref-KeltyStephen2016" class="csl-entry" role="listitem">
+Kelty‐Stephen, Damian G., Leia A. Stirling, and Lewis A. Lipsitz. 2016.
+<span>“Multifractal Temporal Correlations in Circle‐tracing Behaviors
+Are Associated with the Executive Function of Rule‐switching Assessed by
+the Trail Making Test.”</span> <em>Psychological Assessment</em> 28 (2):
+171–83. <a
+href="https://doi.org/10.1037/pas0000177">https://doi.org/10.1037/pas0000177</a>.
+</div>
+</div>
+</div>
+                <div class="dataset-description">
+            <div id="comments"></div>
+        </div>
+    </main>
+
+    <div id="footer"></div>
+</body>
+</html>

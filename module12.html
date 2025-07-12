@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Item 1</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="templateLoader.js"></script>
+    <script src="comments.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <div id="header"></div>
+    <div id="nav"></div>
+
+    <main class="module-body">
+        <div class="dataset-description">
+
+<h1>Entropy as a Lens on Stock Market Behavior</h1>
+<h1 id="sec:introduction">Introduction</h1>
+<p>Shannon entropy, originally introduced in the context of information
+theory by <span class="citation" data-cites="shannon-1948">Shannon
+(1948)</span>, quantifies the average amount of “information” or
+“surprise” contained in a random variable. For a discrete distribution
+with probabilities <span
+class="math inline"><em>p</em><sub>1</sub>, <em>p</em><sub>2</sub>, …, <em>p</em><sub><em>N</em></sub></span>,
+the Shannon entropy is defined as 
+<p>\( H = -\sum_{i=1}^N p_i \log_2 p_i \quad \text{(bits)} \)</p>
+
+where higher values of <span
+class="math inline"><em>H</em></span> indicate that outcomes are more
+uniformly spread (and therefore more unpredictable), while lower values
+correspond to distributions concentrated in a few outcomes.</p>
+<p>In the context of financial time series, we interpret each daily
+return of a stock as an outcome in a probability distribution. Shannon
+entropy therefore measures the unpredictability of a stock’s daily price
+changes: a high entropy means the stock shows many different return
+magnitudes with similar frequency, whereas a low entropy indicates that
+most days the return stays within a narrow band.</p>
+<p>To apply entropy analysis to our dataset of 491 equities over five
+years, we first compute their daily log‐returns. We then separate each
+stock’s continuous return series into thirty equally spaced bins,
+yielding an empirical probability mass function. When we have these bin
+probabilities, we compute Shannon entropy in bits. This procedure
+produces an interpretable metric per company that complements
+traditional risk measures such as volatility by capturing the shape of
+the return distribution rather than merely its scale.</p>
+<p>By sorting stocks by their entropy, we see a range from steady
+’staples’ with low daily surprise to fast-changing stocks that have many
+ups and downs. In what follows, we explain our analyses, present the
+results including interactive visualizations of the entropy, and discuss
+the insights that follow from this.</p>
+<h1 id="sec:methods">Methods</h1>
+<p>Our analysis was performed in four main steps: data preparation,
+return calculation, discretizations, and entropy computation, followed
+by interactive visualizations.</p>
+<h2 id="data-preparation.">Data Preparation.</h2>
+<p>We begin with five years of daily closing prices for 491 equities.
+After loading the CSV into a pandas DataFrame, we parse the ’Date’
+column as a timezone-naive datetime, sort by company and date, and reset
+the index to ensure that all operations that follow align correctly.</p>
+<h2 id="log-return-calculation.">Log-Return Calculation.</h2>
+<p>For each stock we compute the sequence of daily log-returns, where
+<p>\( r_t = \ln\!\left(\tfrac{P_t}{P_{t-1}}\right) \)</p>
+<span class="math inline"><em>P</em><sub><em>t</em></sub></span> is the
+closing price on day <span class="math inline"><em>t</em></span>.
+Log-returns are additive over time and normalize across different price
+levels, making them suitable for cross-company comparison <span
+class="citation" data-cites="tsay-2005">(Tsay and University of Chicago
+Graduate School of Business 2005)</span>.</p>
+<h2 id="discretizations.">Discretizations.</h2>
+<p>To estimate a discrete probability distribution, we divide each
+stock’s continuous return series into thirty equally spaced bins. Each
+daily return <span
+class="math inline"><em>r</em><sub><em>t</em></sub></span> is assigned a
+bin index <span class="math inline"><em>i</em> ∈ {1, …, 30}</span>.
+Counting the fraction of days in each bin results in a probability mass
+function <span
+class="math inline">{<em>p</em><sub><em>i</em></sub>}</span>.</p>
+<h2 id="shannon-entropy-computation.">Shannon Entropy Computation.</h2>
+<p>We then calculate Shannon entropy in bits as where 
+<p>\( H = -\sum_{i=1}^{30} p_i \,\log_2 p_i \)</p>
+    <span
+class="math inline"><em>p</em><sub><em>i</em></sub></span> is the
+relative frequency of returns in bin <span
+class="math inline"><em>i</em></span>. Bins with zero observations are
+excluded from the sum to avoid undefined expressions. This single metric
+captures the “shape” of each return distribution, that is; how spread
+out or concentrated the daily returns are.</p>
+<h2 id="visualization.">Visualization.</h2>
+<p>To visualise the resulting entropy values, we generated:</p>
+<ul>
+<li><p>An <em>interactive Plotly bar chart</em> with hover-labels for
+each ticker (for hiding crowded tick marks).</p></li>
+<li><p>A <em>histogram</em> and <em>cumulative distribution
+function</em> (CDF) of all entropies, showing overall dispersion and
+percentile thresholds.</p></li>
+<li><p>A <em>scatter plot</em> of entropy versus volatility (standard
+deviation of log-returns) to contrast distributional shape with
+scale.</p></li>
+<li><p>A <em>horizontal bar chart</em> highlighting the top and bottom
+20 stocks by entropy.</p></li>
+</ul>
+<p>Each visualization provides insight into the unpredictability of
+different stocks in its own unique way.</p>
+<h1 id="sec:results">Results</h1>
+<p>In this section we present the main findings of our Shannon entropy
+analysis. Figures <a href="#fig:bar" data-reference-type="ref"
+data-reference="fig:bar">1</a>, <a href="#fig:histogram"
+data-reference-type="ref" data-reference="fig:histogram">2</a>, <a
+href="#fig:scatter" data-reference-type="ref"
+data-reference="fig:scatter">3</a>, <a href="#fig:extremes"
+data-reference-type="ref" data-reference="fig:extremes">4</a>, and <a
+href="#fig:cdf" data-reference-type="ref" data-reference="fig:cdf">5</a>
+summarize the entropy values for all 491 stocks, their distribution,
+their relationship with volatility, and the most extreme cases.</p>
+<figure id="fig:bar">
+<iframe src="module12_images/Entropy_Daily_Log_Returns.html" width="500" height="500" scrolling="no"></iframe>
+<figcaption>Figure 1: Shannon entropy of daily log‐returns for each stock, sorted
+from highest (left) to lowest (right).</figcaption>
+</figure>
+<h2 id="entropy-ranking-figure-figbar.">Entropy Ranking (Figure <a
+href="#fig:bar" data-reference-type="ref"
+data-reference="fig:bar">1</a>).</h2>
+<p>The full ranking of entropy reveals a continuous spectrum from
+approximately 2.2 bits at the top to under 0.4 bits at the bottom. The
+fast decline among the highest‐entropy names indicates a small subset of
+stocks with exceptionally unpredictable return patterns, while the long
+tail toward the right shows many stocks show relatively little surprise
+on a daily basis.</p>
+<figure id="fig:histogram">
+<iframe src="module12_images/Stock_Entropy_Distribution.html" width="500" height="500" scrolling="no"></iframe>
+<figcaption>Figure 2: Histogram of Shannon entropy across all stocks.</figcaption>
+</figure>
+<h2 id="entropy-distribution-figure-fighistogram.">Entropy Distribution
+(Figure <a href="#fig:histogram" data-reference-type="ref"
+data-reference="fig:histogram">2</a>).</h2>
+<p>The histogram of entropy values shows a clear central peak between
+0.8 and 1.4 bits, with the highest bar around 1.1 bits. Roughly 70–80
+stocks lie in the modal bin, suggesting that most equities share a
+similar moderate level of daily unpredictability. A small number of
+stocks fall below 0.6 bits (the lowest‐entropy decile), and a few exceed
+1.8 bits (the highest‐entropy decile).</p>
+<figure id="fig:scatter">
+<iframe src="module12_images/Entropy vs Volatility.html" width="500" height="500" scrolling="no"></iframe>
+<figcaption>Figure 3: Scatter plot of Shannon entropy versus volatility (std. dev.
+of log-returns).</figcaption>
+</figure>
+<h2 id="entropy-vs.-volatility-figure-figscatter.">Entropy vs.
+Volatility (Figure <a href="#fig:scatter" data-reference-type="ref"
+data-reference="fig:scatter">3</a>).</h2>
+<p>Plotting entropy against the standard deviation of returns confirms a
+strong positive correlation: more volatile stocks generally show greater
+unpredictability. However, the scatterplot also reveals outlier stocks
+with similar volatility but differing entropy, suggesting that
+volatility alone does not fully capture the shape of the return
+distribution.</p>
+<figure id="fig:extremes">
+<iframe src="module12_images/Top20_Bottom20_Stock_Entropies.html" width="500" height="500" scrolling="no"></iframe>
+<figcaption>Figure 4: Horizontal bar chart of the top 20 and bottom 20 stocks by
+Shannon entropy.</figcaption>
+</figure>
+<h2 id="top-and-bottom-20-stocks-figure-figextremes.">Top and Bottom 20
+Stocks (Figure <a href="#fig:extremes" data-reference-type="ref"
+data-reference="fig:extremes">4</a>).</h2>
+<p>Focusing on the top and bottom of the distribution, the top‐20 panel
+is dominated by high‐growth or event‐driven companies (e.g. COIN, RBLX,
+MRNA), each exceeding 1.8 bits. The bottom‐20 panel consists primarily
+of large, mature staples (e.g. JNJ, PEP, KO), all below 0.6 bits. This
+sectoral separation shows how business model and market dynamics can
+influence daily returns.</p>
+<figure id="fig:cdf">
+<iframe src="module12_images/CDF_Stock_Entropies.html" width="500" height="500" scrolling="no"></iframe>
+<figcaption>Figure 5: Cumulative distribution function (CDF) of stock
+entropies.</figcaption>
+</figure>
+<h2 id="cumulative-distribution-figure-figcdf.">Cumulative Distribution
+(Figure <a href="#fig:cdf" data-reference-type="ref"
+data-reference="fig:cdf">5</a>).</h2>
+<p>The CDF translates raw entropy values into percentiles:</p>
+<ul>
+<li><p>10% of stocks have entropy less than 0.8 bits,</p></li>
+<li><p>25% less than 1.0 bits,</p></li>
+<li><p>50% less than 1.12 bits,</p></li>
+<li><p>75% less than 1.40 bits,</p></li>
+<li><p>90% less than 1.80 bits.</p></li>
+</ul>
+<p>This table of thresholds provides a cut-off points for categorizing
+stocks into low, medium, and high unpredictability groups.</p>
+<h2 id="summary-of-findings.">Summary of Findings.</h2>
+<p>Across all visualizations, three key patterns emerge: Most stocks
+cluster in a moderate entropy range (0.8–1.4 bits). Extremes are driven
+by sector and business model: speculative or event‐driven names show the
+highest entropy, while defensive, cash‐flow‐stable names show the
+lowest. Entropy and volatility correlate strongly but not perfectly,
+suggesting that entropy adds complementary information about the
+diversity of return sizes.</p>
+<h1 id="sec:discussion &amp; conclusion">Conclusion &amp;
+Discussion</h1>
+<p>On top of traditional volatility measures, this analysis shows
+another aspect of return risk in stocks. While higher volatility
+generally corresponds to greater entropy, the scatter plot reveals
+stocks with similar standard deviations but different entropy levels,
+showing that two equities can swing by the same magnitude yet differ in
+the variety of their daily moves. The segmentation between high‐entropy,
+event‐driven names (for example, cryptocurrency and biotech firms) and
+low‐entropy, defensive staples (such as consumer goods and large‐cap
+healthcare) reflects how industry dynamics and business models influence
+the stock market.</p>
+<p>In future work, applying Shannon entropy in a rolling window
+framework could enable real-time detection of regime shifts or emerging
+market events. Further exploring alternative complexity metrics such as
+<a href="module7.html">sample</a> or permutation entropy may reveal nonlinear patterns that Shannon
+entropy alone does not capture <span class="citation"
+data-cites="bandt-2002">(Bandt and Pompe 2002)</span> <span
+class="citation" data-cites="richman-2000">(Richman and Moorman
+2000)</span>. Lastly, entropy-based screening offers a simple way to
+classify stocks into defensive, moderate, and speculative buckets, which
+can be helpful for portfolio construction and risk monitoring. In sum,
+Shannon entropy is a decent tool for understanding market complexity,
+providing a concise and interpretable measure of daily return
+unpredictability that can inform both strategic and tactical
+decision-making in complex financial systems.</p>
+
+<h1 id="sec:references">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent"
+data-entry-spacing="0" role="list">
+<div id="ref-bandt-2002" class="csl-entry" role="listitem">
+Bandt, Christoph, and Bernd Pompe. 2002. <span>“Permutation Entropy: A
+Natural Complexity Measure for Time Series.”</span> <em>Physical Review
+Letters</em> 88 (17). <a
+href="https://doi.org/10.1103/physrevlett.88.174102">https://doi.org/10.1103/physrevlett.88.174102</a>.
+</div>
+<div id="ref-richman-2000" class="csl-entry" role="listitem">
+Richman, Joshua S., and J. Randall Moorman. 2000. <span>“Physiological
+Time-Series Analysis Using Approximate Entropy and Sample
+Entropy.”</span> <em>AJP Heart and Circulatory Physiology</em> 278 (6):
+H2039–49. <a
+href="https://doi.org/10.1152/ajpheart.2000.278.6.h2039">https://doi.org/10.1152/ajpheart.2000.278.6.h2039</a>.
+</div>
+<div id="ref-shannon-1948" class="csl-entry" role="listitem">
+Shannon, C. E. 1948. <span>“A Mathematical Theory of
+Communication.”</span> Vol. 27.
+</div>
+<div id="ref-tsay-2005" class="csl-entry" role="listitem">
+Tsay, Ruey S., and University of Chicago Graduate School of Business.
+2005. <em>Analysis of Financial Time Series</em>. Edited by David J.
+Balding, Noel A. C. Cressie, Nicholas I. Fisher, Iain M. Johnstone, J.
+B. Kadane, Geert Molenberghs, Louise M. Ryan, et al. Second Edition.
+John Wiley &amp; Sons, Inc. <a
+href="https://cpb-us-w2.wpmucdn.com/blog.nus.edu.sg/dist/0/6796/files/2017/03/analysis-of-financial-time-series-copy-2ffgm3v.pdf">https://cpb-us-w2.wpmucdn.com/blog.nus.edu.sg/dist/0/6796/files/2017/03/analysis-of-financial-time-series-copy-2ffgm3v.pdf</a>.
+</div>
+<div id="ref-module12slides2025" class="csl-entry" role="listitem">
+Wiltshire, Dr. Travis J. 2025. <span>“12 - Information Theory and
+Entropy.”</span> Tilburg University; Lecture slides for Module 12 of the
+Complex Systems master’s course.
+</div>
+</div>
+
+        
+        </div>
+        
+        
+       
+
+
+                <div class="dataset-description">
+            <div id="comments"></div>
+        </div>
+    </main>
+
+    <div id="footer"></div>
+</body>
+</html>

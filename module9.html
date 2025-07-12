@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Item 1</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="templateLoader.js"></script>
+    <script src="comments.js"></script>
+</head>
+<body>
+    <div id="header"></div>
+    <div id="nav"></div>
+
+    <main class="module-body">
+        <div class="dataset-description">
+            <h1>Multivariate Coordination in The Stock Market</h1>
+        <h1 id="introduction-to-multivariate-coordination">Introduction to
+Multivariate Coordination</h1>
+<p>In complex systems, a collection of components/agents all have their
+own behaviors or patterns, from which a global structure emerges. In
+other posts, we have looked at different ways of studying these systems,
+such as Phase Space Reconstrcution and RQA. In this post, we will be
+going into Coordination, specifically <strong>Multivariate
+Coordination</strong>.</p>
+<p>Coordination refers to the ways in which components and processes of
+a system change together over time <span class="citation"
+data-cites="butner2014modeling">(Butner et al. 2014)</span>. Examples of
+this can be found in how heart rate, skin conductance, and brain
+activity align during shared experiences, or how body movements and
+vocal patterns synchronize in conversations. Coordination can also
+manifest in group activities, such as joint musical performance,
+collaborative problem-solving, or medical teams, where physiological
+synchronization can be used to determine effective group dynamics <span
+class="citation" data-cites="wespi2025physiological">(Wespi et al.
+2025)</span>.</p>
+<p>Using tools such as the <strong>multiSyncPy Python package</strong>
+<span class="citation" data-cites="hudson2023multisyncpy">(Hudson,
+Wiltshire, and Atzmueller 2023)</span>, researchers can quantify these
+dynamics with methods like multidimensional recurrence analysis,
+symbolic entropy, coherence, and cluster-phase synchrony. These
+approaches help reveal patterns of co-regulation and entrainment that
+are not immediately observable, offering insight into how complex
+systems function, adapt, and maintain coherence.</p>
+<h1 id="dataset">Dataset</h1>
+<p>For this post, we will again be using data from the ’<strong>Massive
+Yahoo Finance Dataset</strong>’, which has logged stock market metrics
+of the top 500 biggest companies for 1258 consecutive days. For our
+multivariate coordination analysis, we will be looking at six of the
+biggest tech companies, Apple, Meta, Google, Microsoft, Nvidia, and
+ASML. Below you will find the code to load the data and plot the
+stocks.</p>
+<pre><code># Load &amp; pivot closing prices
+data = pd.read_csv(&quot;stock_details_5_years.csv&quot;, parse_dates=[&quot;Date&quot;])
+ts_array = (
+    data
+    .pivot(index=&quot;Date&quot;, columns=&quot;Company&quot;, values=&quot;Close&quot;)
+    .loc[:, [&quot;AAPL&quot;,&quot;META&quot;,&quot;GOOGL&quot;,&quot;MSFT&quot;,&quot;NVDA&quot;,&quot;ASML&quot;]]
+    .dropna()
+)
+
+# Plot 1: Closing Prices
+plt.figure(figsize=(10, 6))
+for ticker in ts_array.columns:
+    plt.plot(ts_array.index, ts_array[ticker], label=ticker)
+plt.title(&quot;Closing Prices (5 Years)&quot;)
+plt.xlabel(&quot;Date&quot;)
+plt.ylabel(&quot;Price&quot;)
+plt.legend(loc=&quot;upper left&quot;, frameon=False)
+plt.tight_layout()
+plt.show()</code></pre>
+<figure id="fig:raw closing">
+<img src="module9_images/raw_closing_prices.png" style="width:50.0%" />
+<figcaption>Figure 1: Closing stock prices of six large tech
+companies</figcaption>
+</figure>
+<h1 id="multivariate-coordination-metrics">Multivariate Coordination
+metrics</h1>
+<p>The <strong>multiSyncPy Python package</strong> contains six
+functions for analyzing multivariate coordination. We will go through
+them one by one, applying them to the data, and discussing their
+strengths and weaknesses.</p>
+<h2
+id="multidimensional-recurrence-quantification-analysis-mdrqa">Multidimensional
+Recurrence Quantification Analysis (mdRQA)</h2>
+<p>mdRQA builds a binary <strong>recurrence matrix</strong> by marking
+which time‐points across all series come within a specified radius of
+one another. From this matrix you can derive metrics such as %REC
+(recurrence rate), %DET (determinism), mean diagonal length, and maximum
+diagonal length. In this post, we will be focusing on the recurrence
+rate. For this metric, we’ll first need to normalize the data, since it
+calculates the euclidean distance between points.</p>
+<p><strong>Strengths:</strong> The metric is model‐free and captures
+nonlinear coordination without assuming oscillatory structure. Can be
+applied to series of different lengths.</p>
+<p><strong>Weaknesses:</strong> Requires manual choice of the radius
+parameter, computationally expensive for long time series.</p>
+<p><strong>Interpretation:</strong> Higher recurrence indicates more
+persistent, predictable joint dynamics.</p>
+<pre><code># Multidimensional Recurrence Quantification Analysis (mdRQA)
+# Min-Max normalize each series to [0, 100]
+min_vals = ts_array.min()
+max_vals = ts_array.max()
+scaled = (ts_array - min_vals) / (max_vals - min_vals) * 100
+ts_array_scaled = scaled.values.T
+
+radius      = 1
+rec_mat     = sm.recurrence_matrix(ts_array_scaled, radius=radius)    
+rec_metrics = sm.rqa_metrics(rec_mat) 
+print(&quot;mdRQA (rec, det, mean_len, max_len):&quot;, rec_metrics)</code></pre>
+<p>On our six‐company stock data, mdRQA returned</p>
+<p>
+  (&#37;REC, &#37;DET, <span style="text-decoration: overline;">L</span>, L<sub>max</sub>) =
+  (0.1302,&nbsp;0.9796,&nbsp;16.0345,&nbsp;799).
+</p>
+
+<p>The recurrence rate of <span class="math inline"> ≈ 13.02%</span>
+means this is the portion of time-point pairs across the six series that
+are mutually close in state-space-coordination, given a radius of 1.
+However, changing this radius to a different value vastly changes
+results, highlighting the relative weakness of this metric.</p>
+<h2 id="symbolic-entropy">Symbolic Entropy</h2>
+<p>Symbolic Entropy is a measure of how ordered a system is. It works by
+classifying each time point of each signal into a limited set of
+symbols. For instance, we can divide the possible values of the signals
+into three terciles, low, medium, and high. Next, we classify each time
+point of each signal into these terciles, i.e., giving them a symbol.
+This results in each signal becoming a string of classifications for
+each time point. Then, the Shannon entropy on the distribution of these
+symbols is calculated.</p>
+<p><strong>Strengths:</strong> Grounded in information theory.</p>
+<p><strong>Weaknesses:</strong> Doesn’t scale well with larger number of
+variables.</p>
+<p><strong>Interpretation:</strong> A lower entropy suggests that the
+data is more regular, and therefore the system is more ordered.</p>
+<pre><code># Symbolic Entropy
+sym_entropy = sm.symbolic_entropy(ts_array)
+print(&quot;Symbolic Entropy:&quot;, sym_entropy)</code></pre>
+<figure id="fig:symb">
+<img src="module9_images/symbolic_entropy.png" style="width:50.0%" />
+<figcaption>Figure 2: Symbolic Entropy of six stock market closing
+prices</figcaption>
+</figure>
+<p>The Symbolic Entropy we got of 2.8862 suggests relatively low
+entropy, and therefore a more ordered, regular system. We also get the
+results of the Symbolic Entropy visualized in Figure 3.</p>
+<h2 id="coherence-measure">Coherence Measure</h2>
+<p>The Coherence Measure determines coordination by indicating how well
+one signal can be approximated by a linear function from another. It
+does so by normalizing each signal, and representing them as its Fourier
+transform. It then calculates how well each Fourier transform can be
+linearly mapped to one another, to get a system-level value that
+indicates the coordination between signals.</p>
+<p><strong>Strengths:</strong> Works well with a high sampling rate.</p>
+<p><strong>Weaknesses:</strong> Can be impacted by noise, to a degree
+where it is better to use the sum-normalized CSD. Also cannot compare
+time series of different lengths.</p>
+<p><strong>Interpretation:</strong> A higher Coherence measure means a
+stronger correlation between signals, and thus more coordination.</p>
+<pre><code># Coherence-Measures
+coh = sm.coherence_team(ts_array)
+print(&quot;Coherence:&quot;, coh)</code></pre>
+<p>The Coherence of 0.4799 suggests a relatively high correlation, and
+therefore a more coordinated system.</p>
+<h2 id="sum-normalized-cross-spectral-density">Sum-normalized Cross
+Spectral Density</h2>
+<p>The sum-normalized Cross Spectral Density (CSP) is very closely
+related to the Coherence measure. It differs in that it performs the
+normalization elsewhere, making it much less sensitive to noise.</p>
+<p><strong>Strengths:</strong> Much less sensitive to noise.</p>
+<p><strong>Weaknesses:</strong> Still cannot compare time series of
+different lengths.</p>
+<p><strong>Interpretation:</strong> A higher sum-normalized CSP value
+means a stronger correlation between signals, and thus more
+coordination.</p>
+<pre><code># Sum-normalized CSD
+csd = sm.sum_normalized_csd(ts_array)
+print(&quot;Sum-normalized CSD:&quot;, csd)</code></pre>
+<p>The sum-normalized CSP of 0.5915 suggests and even higher correlation
+between signals, also illustrating the effect noise has had on the
+Coherence measure.</p>
+<h2 id="cluster-phase-rho">Cluster-phase ’rho’</h2>
+<p>Cluster-phase ’rho’ is a Coordination metric that looks at where each
+signal is in its phase. It works by first performing a Hilbert transform
+on each of the signals in order to obtain a continuous phase time series
+of each signal. These phase signals can then be aggregated in order to
+calculate see how similar they are by calculating a synchrony score at
+each time point.</p>
+<p><strong>Strengths:</strong> Converting signals to phase might be the
+best way of representing the signal.</p>
+<p><strong>Weaknesses:</strong> Requires extra transformations on your
+data (the Hilbert transform), and assumes at least
+pseudo-periodicity.</p>
+<p><strong>Interpretation:</strong> The function can return two metrics,
+the overall synchrony score, and the synchrony score at each type point.
+A higher value means a higher degree of coordination.</p>
+<pre><code># Compute continuous phase via Hilbert transform
+phases = np.angle(hilbert(ts_array, axis=1))
+
+# Compute cluster-phase synchrony rho
+rho_time, rho_overall = sm.rho(phases)
+
+# Plot the time-varying rho
+plt.figure(figsize=(10,4))
+plt.plot(ts_array.index, rho_time)
+plt.xlabel(&quot;Date&quot;)
+plt.ylabel(&quot;Cluster-phase rho&quot;)
+plt.title(&quot;Time-Varying Cluster-Phase Synchrony (rho)&quot;)
+plt.tight_layout()
+plt.show()
+
+# Print the overall rho
+print(&quot;Overall cluster-phase rho:&quot;, rho_overall)</code></pre>
+<figure id="fig:clusterphaserho">
+<img src="module9_images/clusterphaserho.png" style="width:50.0%" />
+<figcaption>Figure 3: The Cluster-Phase synchrony of the six stock trends at each
+time point</figcaption>
+</figure>
+<p>The overall score the Cluster-Phase ’rho’ metric gave was 0.9626,
+indicating high coordination between signals. Also, the plot of the
+synchrony score at each time point shows that, while coordination
+remains quite high throughout, the dips in coordination correspond to
+where the stocks drift apart in Figure 2.</p>
+<h2 id="test-on-the-kuramoto-order-parameter">Test on the Kuramoto order
+parameter</h2>
+<p>The <strong>Kuramoto order parameter test</strong> differs from the
+previous metrics, which directly measure coordination, because it treats
+synchrony as a statistical hypothesis test. It first converts each
+signal into a continuous phase time series (for example via the Hilbert
+transform), and then evaluates whether the observed level of phase
+alignment across a population of independent recordings would be
+unlikely under the null hypothesis of random phase relationships.</p>
+<p><strong>Strengths:</strong> Allows you to test an hypothesis
+directly.</p>
+<p><strong>Weaknesses:</strong> Requires extra transformations on your
+data (the Hilbert transform), and assumes phase values are uniformly
+distributed.</p>
+<p><strong>Interpretation:</strong> A small p-value indicates that the
+group’s synchrony is unlikely under random phase alignment, confirming
+coordination.</p>
+<pre><code># Create a sample of 100 &quot;recordings&quot; by tiling and adding noise
+n_recordings = 100
+noise_std    = 0.1
+
+sample = np.tile(
+    ts_array[np.newaxis, ...], 
+    (n_recordings, 1, 1)
+) + np.random.normal(
+    loc=0, 
+    scale=noise_std, 
+    size=(n_recordings, ts_array.shape[0], ts_array.shape[1])
+)
+
+# Compute instantaneous phase for each recording
+#    (hilbert along the time axis, axis=2)
+sample_phases = np.angle(hilbert(sample, axis=2))
+
+# Perform the Kuramoto weak-null test
+p_val, t_stat, df = sm.kuramoto_weak_null(sample_phases)
+
+print(f&quot;Kuramoto weak-null test -&gt; p = {p_val:.3e}, t = {t_stat:.2f}, df = {df}&quot;)</code></pre>
+<p>The Kuramoto weak-null test yielded p = 0.000e+00, t = 251288.27, and
+df = 99, which can be interpreted as very strong evidence that the six
+signals in our dataset have coordinated phases.</p>
+<h1 id="choosing-the-right-metric">Choosing the right metric</h1>
+<p>We’ve now looked at all the different metrics included in the
+multiSyncPy package in the context of financial data. Apart from the
+respective limitations already mentioned, how do you choose which metric
+to use for your specific application? Does it matter?</p>
+<p>The paper by <span class="citation"
+data-cites="hudson2023multisyncpy">(Hudson, Wiltshire, and Atzmueller
+2023)</span> tested this by applying all metrics to different types of
+data. In their first test, they evaluated metric performance on time
+series with increasing levels of noise. Results can be found in Figure
+5. This figure shows that the various metrics respond differently to
+added noise: Coherence changes the most—making it the most sensitive,
+while other metrics, such as <span
+class="math inline"><em>ρ</em></span>, are comparatively robust.</p>
+<figure id="fig:noise">
+<img src="module9_images/noise.png" style="width:50.0%" />
+<figcaption>Figure 4: Different multiSyncPy metrics tested against increasing
+levels of noise</figcaption>
+</figure>
+<p>In their second test, they applied the metrics to time series with
+progressively stronger coupling (i.e. coordination). Results are shown
+in Figure 6. In this scenario, higher coupling should yield higher
+synchrony scores. Again, Coherence shows little change, whereas
+sum-normalized CSD effectively tracks the increase in coordination.</p>
+<figure id="fig:coupling">
+<img src="module9_images/coupling.png" style="width:50.0%" />
+<figcaption>Figure 5: Different multiSyncPy metrics tested against increasing
+levels of coupling</figcaption>
+</figure>
+<h1 id="conclusion">Conclusion</h1>
+<p>In this post, we have demonstrated how the multiSyncPy package
+enables analysis of coordination in multivariate time series, using six
+different metrics. Each metric offers unique insights: mdRQA uncovers
+nonlinear, nonstationary patterns, symbolic entropy quantifies
+state‐space diversity, coherence and sum-normalized CSD capture spectral
+coupling with varying noise resilience, cluster-phase rho tracks phase
+alignment, and the Kuramoto weak-null test provides formal statistical
+inference. There is no one "best" metric: your choice should align with
+the properties of your data (e.g. linear versus nonlinear dynamics,
+presence of noise, stationarity) and your goals (descriptive profiling
+versus hypothesis testing). By combining complementary measures, you can
+obtain a richer, more robust picture of coordination in complex
+systems.</p>
+
+<h1>References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent"
+data-entry-spacing="0" role="list">
+<div id="ref-butner2014modeling" class="csl-entry" role="listitem">
+Butner, Jonathan E, Cynthia A Berg, Brian R Baucom, and Deborah J Wiebe.
+2014. <span>“Modeling Coordination in Multiple Simultaneous Latent
+Change Scores.”</span> <em>Multivariate Behavioral Research</em> 49 (6):
+554–70.
+</div>
+<div id="ref-hudson2023multisyncpy" class="csl-entry" role="listitem">
+Hudson, Dan, Travis J Wiltshire, and Martin Atzmueller. 2023.
+<span>“multiSyncPy: A Python Package for Assessing Multivariate
+Coordination Dynamics.”</span> <em>Behavior Research Methods</em> 55
+(2): 932–62.
+</div>
+<div id="ref-wespi2025physiological" class="csl-entry" role="listitem">
+Wespi, Rafael, Andrea N Neher, Tanja Birrenbach, Stefan K Schauber,
+Marie Ottilie Frenkel, Helmut Schrom-Feiertag, Thomas C Sauter, and
+Juliane E Kämmer. 2025. <span>“Physiological Team Dynamics Explored:
+Physiological Synchrony in Medical Simulation Training.”</span>
+<em>Advances in Simulation</em> 10 (1): 5.
+</div>
+</div>
+
+                <div class="dataset-description">
+            <div id="comments"></div>
+        </div>
+    </main>
+
+    <div id="footer"></div>
+</body>
+</html>
