@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Item 1</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="templateLoader.js"></script>
+    <script src="comments.js"></script>
+</head>
+<body>
+    <div id="header"></div>
+    <div id="nav"></div>
+
+    <main class="module-body">
+        <div class="dataset-description">
+        <h1>Sample Entropy & The Stock Market</h1>
+       <h1 id="connection-to-course-learning-objectives">Connection to Course
+Learning Objectives</h1>
+<p>In this module we investigate the temporal regularities in financial
+time series of GOOGL’s daily stock prices. We do this by using Sample
+Entropy combined with surrogate data testing. This approach enables us
+to test hypotheses about the presence of nonlinear structure and
+potential determinism in empirical signals.</p>
+<p>Sample Entropy is a metric for assessing the unpredictability and
+regularity of a time series, with lower values indicating greater
+regularity and structure. However, its interpretation depends on
+comparing observed values to those obtained under appropriate null
+hypotheses. Hence we applied surrogate data methods developed in
+nonlinear time series analysis, which allows us to test whether observed
+dynamics can be explained by a linear stochastic process or by
+independently sampled data from the same distribution.</p>
+<p>We applied two surrogate methods; random shuffling and Amplitude
+Adjusted Fourier Transform (AAFT). The random shuffle method destroys
+all temporal dependencies while preserving the empirical distribution,
+which effectively tests against the hypothesis of independent and
+identically distributed noise. The AAFT approach on the other hand,
+preserves both the amplitude distribution and the power spectrum, this
+allows us to test against the null hypothesis of a linear Gaussian
+process with the same autocorrelation structure <span class="citation"
+data-cites="theiler1992testing">(Theiler et al. 1992)</span>.
+Approaching the Sample Entropy estimated from our original data in this
+way enables a more nuanced interpretation.</p>
+<p>This approach reflects a way to distinguish between apparent
+complexity that emerges from structural dependencies and patterns that
+could plausibly arise by chance. Applying surrogate testing as a
+falsification framework <span class="citation"
+data-cites="moulder2018determining">(Moulder et al. 2018)</span>, we
+demonstrate the capacity to generate and test scientifically rigorous
+null hypotheses in empirical data analysis. Our approach also
+illustrates how statistical tools can be used to empirically
+substantiate claims about nonlinearity and potential determinism in
+observed systems.</p>
+<h1 id="loading-the-required-libraries">Loading the Required
+Libraries</h1>
+<p>To perform our analysis we loaded several R libraries:</p>
+<pre><code>library(nonlinearTseries)</code></pre>
+<p>The libraries included several statistical functions, visualization
+tools, and time-series analysis capabilities.</p>
+<h1 id="loading-and-filtering-data">Loading and Filtering Data</h1>
+<p>We begin by loading the dataset and isolating GOOGL stock:</p>
+<pre><code>df &lt;- read.csv(&#39;stock_details_5_years.csv&#39;)
+df_googl &lt;- df[df$Company == &quot;GOOGL&quot;, ]
+df_googl</code></pre>
+<p>This results in a dataset containing the daily stock price details
+for GOOGL. We have chosen to only use GOOGL for this analysis since it
+has been one of the biggest companies for a significant amount of time,
+and this made it a suitable candidate for studying stock market
+dynamics. The extensive trading volume and historical data availability
+allow for an extensive statistical analysis, which makes it easier to
+detect trends, volatility shifts, and potential nonlinear behaviours in
+the stock price movements. Furthermore, GOOGL’s presence across various
+economic cycles provides a comprehensive dataset for exploring both
+short-term fluctuations and long-term structural changes in the
+market.</p>
+<h1 id="pre-processing">Pre-processing</h1>
+<p>To get the best results, three preprocessing steps were performed
+prior to the entropy analysis. The first step was to remove all missing
+values, as these could lead to errors in the model. Removing those
+values ensures that the model operates on valid and uninterrupted
+data.</p>
+<p>The second step involved normalizing the data, which originally
+ranged between 50 and 150, as seen in Figure <a href="#fig:low prices"
+data-reference-type="ref" data-reference="fig:low prices">1</a>. Sample
+entropy is known to be sensitive to scale <span class="citation"
+data-cites="omidvarnia2018range">(Omidvarnia et al. 2018)</span>,
+therefore normalizing the data helps to overcome this problem.
+Normalizing the data will give it a mean of 0 and unit variance. Which
+makes it scale-invariant and more comparable across different time
+series. Figure <a href="#fig:low prices normalized"
+data-reference-type="ref"
+data-reference="fig:low prices normalized">2</a> displays the normalized
+lowest stock prices for GOOGL.</p>
+<figure id="fig:low prices">
+<img src="module7_images/Low Prices.png" style="width:50.0%" />
+<figcaption>Figure 1: Plot of the lowest stock price per day for
+GOOGL</figcaption>
+</figure>
+<figure id="fig:low prices normalized">
+<img src="module7_images/Low Prices Normalized.png" style="width:50.0%" />
+<figcaption>Figure 2: Plot of the normalized lowest stock price per day for
+GOOGL</figcaption>
+</figure>
+<pre><code>low &lt;- df_googl$Low[!is.na(df_googl$Low)]
+low.station &lt;- (low - mean(low))/sd(low)</code></pre>
+<h1 id="sample-entropy">Sample Entropy</h1>
+<p>To get the optimal embedding dimension False Nearest Neighbors was
+used.</p>
+<pre><code>fnn_result &lt;- estimateEmbeddingDim(low.station, time.lag = 1, max.embedding.dim = 10)
+plot(fnn_result)</code></pre>
+<p>As shown in Figure <a href="#fig:embedding dimension"
+data-reference-type="ref" data-reference="fig:embedding dimension">3</a>
+the optimal embedding dimension is 8.</p>
+<p>The following code is used to compute the Sample Entropy for the
+lowest stock prices of GOOGL per day.</p>
+<pre><code>low.SampEn &lt;- pracma::sample_entropy(low.station, edim=8,r=0.2*sd(low.station),tau=1)
+print(low.SampEn)</code></pre>
+<p>It returns a value of 0.08033913 which indicates that the data is
+regular and predictable, and has low complexity. To test if there is not
+just a random pattern in the data we made use of 20 different, random
+surrogates.</p>
+<pre><code>set.seed(123456)
+
+n_surrogates &lt;- 20
+random_surrogates &lt;- replicate(n_surrogates, sample(low.station, replace=FALSE))
+
+# Compute the Sample Entropy of all surrogates
+sampen_values &lt;- apply(random_surrogates, MARGIN=2, FUN = pracma::sample_entropy, edim=8,r=0.2*sd(random_surrogates[,1]),tau=1)
+print(sampen_values)
+print(any(is.na(sampen_values)))
+
+# Compute statistics
+mean &lt;- mean(sampen_values,na.rm = TRUE)
+n &lt;- length(sampen_values)
+sd &lt;- sd(sampen_values)
+confidence_interval &lt;- quantile(sampen_values, probs = c(0.025, 0.5, 0.975), na.rm = TRUE)
+
+print(confidence_interval)</code></pre>
+<p>The confidence interval returned Table <a href="#tab:quantile-inf"
+data-reference-type="ref" data-reference="tab:quantile-inf">1</a>. This
+outcome indicates that the sample entropy calculation failed for all 20
+surrogates. This is most likely because there are no recurring patterns
+left in the data at an embedding dimension of 8. This suggests that the
+temporal structure which is present in the original data is disrupted in
+the surrogate data. Therefore supporting the claim that there is
+meaningful structure in the original lower price data.</p>
+<div id="tab:quantile-inf">
+<table>
+<caption>Quantiles (2.5%, 50%, 97.5%) of Sample Entropy values from
+surrogate data on lowest price.</caption>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>Quantile</strong></th>
+<th style="text-align: center;"><strong>2.5%</strong></th>
+<th style="text-align: center;"><strong>50% (Median)</strong></th>
+<th style="text-align: center;"><strong>97.5%</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>SampEn</strong></td>
+<td style="text-align: center;">Inf</td>
+<td style="text-align: center;">Inf</td>
+<td style="text-align: center;">Inf</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><span id="tab:quantile-inf" data-label="tab:quantile-inf"></span></p>
+<p>Of the 20 surrogates, 18 returned NaN and 2 returned Inf for sample
+entropy. However, the original data had a sample entropy value of
+0.08033913. This indicates that the surrogates lack any meaningful
+pattern recurrence, while the original data contains structure.
+Therefore, we reject the null hypothesis that the original data is
+random.</p>
+<p>To check if this would also hold for the Amplitude Adjusted Fourier
+Transform, since it also preserves both the amplitude distribution and
+autocorrelation structure.</p>
+<pre><code>set.seed(123456)
+n_surrogates &lt;- 20
+# Generate 20 AAFT surrogates
+aaft_surrogates &lt;- t(FFTsurrogate(low.station, n.samples = n_surrogates))
+
+# Calculate Sample Entropy for AAFT for edim = 8
+aaft_sampEn &lt;- apply(aaft_surrogates, 2, function(x) pracma::sample_entropy(x, edim = 8, r = 0.2 * sd(x), tau = 1))
+
+# Compute statistics
+aaft_confidence_interval &lt;- quantile(aaft_sampEn, probs = c(0.025, 0.5, 0.975), na.rm = TRUE)
+
+print(aaft_confidence_interval)</code></pre>
+<p>Table <a href="#tab:aaft-quantiles" data-reference-type="ref"
+data-reference="tab:aaft-quantiles">2</a> displays the results of AAFT.
+Since the sample entropy for the original low price data of 0.08033913
+falls outside of the 95% confidence interval the null hypothesis can be
+rejected.</p>
+<p>Finally, we also wanted to check if there is also structure in the
+other variables for GOOGL. A function was created which took the data
+and name as variables and computed the 20 random surrogates followed by
+AAFT.</p>
+<pre><code>analyze_signal &lt;- function(signal, name=&quot;&quot;) {
+  signal &lt;- signal[!is.na(signal)]
+  station &lt;- (signal - mean(signal)) / sd(signal)
+  SampEn &lt;- pracma::sample_entropy(station, edim=8, r=0.2*sd(station), tau=1)
+
+  # Random surrogate
+  rand_surr &lt;- replicate(20, sample(station, replace=FALSE))
+  rand_sampEn &lt;- apply(rand_surr, 2, function(x) pracma::sample_entropy(x, edim=8, r=0.2*sd(x), tau=1))
+  rand_confidence_interval &lt;- quantile(rand_sampEn, probs = c(0.025, 0.5, 0.975), na.rm = TRUE)
+  rand_p &lt;- mean(rand_sampEn &lt;= SampEn, na.rm = TRUE)
+
+  # AAFT surrogate
+  aaft_surr &lt;- t(FFTsurrogate(station, n.samples = 20))
+  aaft_sampEn &lt;- apply(aaft_surr, 2, function(x) pracma::sample_entropy(x, edim=8, r=0.2*sd(x), tau=1))
+  aaft_confidence_interval &lt;- quantile(aaft_sampEn, probs = c(0.025, 0.5, 0.975), na.rm = TRUE)
+  aaft_p &lt;- mean(aaft_sampEn &lt;= SampEn, na.rm = TRUE)
+
+  cat(&quot;\n&quot;, &quot;----&quot;, name, &quot;----&quot;, &quot;\n&quot;)
+  cat(&quot;Observed SampEn:&quot;, SampEn, &quot;\n&quot;)
+  cat(&quot;Random CI:&quot;, rand_confidence_interval, &quot;| p-value =&quot;, rand_p, &quot;\n&quot;)
+  cat(&quot;AAFT CI:&quot;, aaft_confidence_interval, &quot;| p-value =&quot;, aaft_p, &quot;\n&quot;)
+}
+analyze_signal(df_googl$High, &quot;High&quot;)
+analyze_signal(df_googl$Open, &quot;Open&quot;)
+analyze_signal(df_googl$Close, &quot;Close&quot;)</code></pre>
+<p>The results are displayed in Figure <a href="#tab:sampen-results"
+data-reference-type="ref"
+data-reference="tab:sampen-results">[tab:sampen-results]</a>. It shows
+that for all variables tested the null hypothesis can be rejected as the
+original data contains nonlinear temporal dependencies.</p>
+
+
+<div id="tab:aaft-quantiles">
+<table>
+<caption>Quantiles (2.5%, 50%, 97.5%) of Sample Entropy values from AAFT
+lowest price surrogate data.</caption>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>Quantile</strong></th>
+<th style="text-align: center;"><strong>2.5%</strong></th>
+<th style="text-align: center;"><strong>50% (Median)</strong></th>
+<th style="text-align: center;"><strong>97.5%</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>SampEn</strong></td>
+<td style="text-align: center;">0.2448</td>
+<td style="text-align: center;">0.2668</td>
+<td style="text-align: center;">0.2864</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><span id="tab:aaft-quantiles"
+data-label="tab:aaft-quantiles"></span></p>
+<p><span id="tab:sampen-results"
+data-label="tab:sampen-results"></span></p>
+<figure id="fig:embedding dimension">
+<img src="module7_images/Computing Embedding Dimension.png" style="width:50.0%" />
+<figcaption>Figure 3: Computing the embedding dimension</figcaption>
+</figure>
+<h1 id="reflection">Reflection</h1>
+<p>This module builds on the explorations of dynamic behaviour in
+financial markets from previous modules. These modules have focused on
+visual pattern recognition and phase space reconstruction in time
+series. This module takes a more analytical approach, focusing on the
+application of sample entropy and surrogate testing. The goal is to
+determine whether the time series exhibits regularity rather than
+noise.</p>
+<p>Therefore, we moved from speculative pattern detection to a
+falsifiable framework in this module. The fact that all GOOGL stock
+price variables have shown lower sample entropy than the surrogates
+provides strong evidence of structure in the data.</p>
+
+<h1>References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent"
+data-entry-spacing="0" role="list">
+<div id="ref-moulder2018determining" class="csl-entry" role="listitem">
+Moulder, Robert G., Steven M. Boker, Fabian Ramseyer, and Wolfgang
+Tschacher. 2018. <span>“Determining Synchrony Between Behavioral Time
+Series: An Application of Surrogate Data Generation for Establishing
+Falsifiable Null-Hypotheses.”</span> <em>Psychological Methods</em> 23
+(4): 757–73. <a
+href="https://doi.org/10.1037/met0000172">https://doi.org/10.1037/met0000172</a>.
+</div>
+<div id="ref-omidvarnia2018range" class="csl-entry" role="listitem">
+Omidvarnia, Amir, Mostefa Mesbah, Morten Pedersen, and Graeme D.
+Jackson. 2018. <span>“Range Entropy: A Bridge Between Signal Complexity
+and Self-Similarity.”</span> <em>Entropy</em> 20 (12): 962. <a
+href="https://doi.org/10.3390/e20120962">https://doi.org/10.3390/e20120962</a>.
+</div>
+<div id="ref-theiler1992testing" class="csl-entry" role="listitem">
+Theiler, James, Stephen Eubank, André Longtin, Bruce Galdrikian, and J.
+Doyne Farmer. 1992. <span>“Testing for Nonlinearity in Time Series: The
+Method of Surrogate Data.”</span> <em>Physica D: Nonlinear
+Phenomena</em> 58 (1-4): 77–94. <a
+href="https://doi.org/10.1016/0167-2789(92)90102-S">https://doi.org/10.1016/0167-2789(92)90102-S</a>.
+</div>
+</div>
+</div>
+
+               <div class="dataset-description">
+            <div id="comments"></div>
+        </div>
+    </main>
+
+    <div id="footer"></div>
+</body>
+</html>

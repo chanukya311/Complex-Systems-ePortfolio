@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Item 1</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="templateLoader.js"></script>
+    <script src="comments.js"></script>
+</head>
+<body>
+    <div id="header"></div>
+    <div id="nav"></div>
+
+    <main class="module-body">
+        <div class="dataset-description">
+<h1>RQA in The Stock Market</h1>
+
+<h1 id="sec:introduction">Introduction</h1>
+<h2 id="what-is-recurrence-and-rqa">What is recurrence and RQA?</h2>
+<p>Recurrence quantification analysis (RQA) is an assumption-free method
+for characterizing the repeating patterns and stability of a single time
+series by plotting its path against itself in phase space <span
+class="citation" data-cites="eckmann1987recurrence">(Eckmann, Kamphorst,
+and Ruelle 1987)</span>. Wherever the system revisits (or nearly
+revisits) the prior state, a point is marked on the recurrence plot. By
+quantifying these recurrences, RQA extracts metrics such as percent
+recurrence (%REC), determinism (%DET), longest diagonal line, and
+entropy, which together reveal the degree of regularity, predictability
+and complexity in the data <span class="citation"
+data-cites="zbilut1992embeddings">(Zbilut and Webber 1992)</span>.
+Applied to the financial dataset, where price dynamics repeatedly
+fluctuate through similar regimes (crashes and bull markets), RQA can
+highlight regime shifts and hidden structures in asset returns that
+traditional linear methods often miss <span class="citation"
+data-cites="fabretti2004recurrence">(Fabretti and Ausloos
+2004)</span>.</p>
+<h2 id="dataset-used">Dataset used</h2>
+<p>We used the "Massive Yahoo Finance Dataset" from Kaggle <span
+class="citation"
+data-cites="iveeaten3223times_massive_yahoo_finance_dataset">(iveeaten3223times
+2019)</span>, which contains five years of daily OHLCV data from almost
+all the S&amp;P 500 stocks. A deep explanation on how the dataset is set
+up with all the details is written in the introduction of this
+E-Portfolio. Fianancial markets are a great example of a complex system
+becasu many traders make decisions based only on their own information,
+yet together they creat big patterns, that are not easy to predict by
+looking just at one stock. Recurrence analysis helps see how the market
+keeps coming back to similar states over time, showing both the local
+trader interactions and the larger emergent trends they produce<span
+class="citation" data-cites="piskun2011recurrence">(Piskun and Piskun
+2011)</span>.</p>
+<p>The goal of this module is to assess how the market’s tendency to
+"return" to former states evolves over time, and what that tells us
+about stability, volatility regimes and transitions in complex
+systems.</p>
+<h1 id="methods">Methods</h1>
+<p>In this module, each stock’s daily closing prices were converted into
+log-returns and then those returns were standardized, so that every
+series had the same scale. This ensures that stocks with higher
+volatility do not dominate the recurrence calculations <span
+class="citation" data-cites="marwan2007recurrence">(Marwan et al.
+2007)</span>.</p>
+<p>Next, each recurrence plot is directly build on the 1D return series
+(embedding dimension = 1, time delay t = 1), so that RQA metrics
+quantify recurrences in the raw returns. For visualization, 2D time
+delay plots are created and a 3D embedding to capture short-term memory
+and reveal hidden structure in their path<span class="citation"
+data-cites="zbilut1992embeddings">(Zbilut and Webber 1992)</span>.</p>
+<p>For each stock, a single RQA was conducted over the entire five year
+period and classified stocks as "low_vol" and "high_vol" based on the
+standard deviation of their returns during that time and set the
+recurrence threshold so that 2% of all point pairs were marked as
+recurrences <span class="citation"
+data-cites="marwan2007recurrence">(Marwan et al. 2007)</span>. By
+setting a 2% threshold, the plots in each window had roughly the same
+density of recurrence points.</p>
+<p>These binary recurrence plots were used to measure how often the
+series returned near past states (%REC), how many of those returns
+formed continuous diagonal lines (determinism/DET), and how long those
+diagonal lines ran on average (MDL). These statistics are often used to
+comprehend and prove how repetitive, predictable and persistent the
+return patterns are.</p>
+<p>To visualize the repetitive behavior, time-delay plots (2D and 3D)
+were created. 2D plots to visualize 2D charts of return against one-day
+lagged value, and 3D plots to visualize return against its values one
+and two days earlier. The 3D version is more interpretable to conclude
+how return cluster tightly in clam markets and spread out when
+volatility spikes.</p>
+<p>Finally, a T-test was ran on DET and MDL of the windows with low- and
+high volatility groups on realized volatility to confirm whether these
+metrics changed significantly in crashed instead of calm markets.</p>
+<p>All these steps were implemented in Python.</p>
+<h1 id="results">Results</h1>
+<p>Figure 1 and 2 presents the box plots of DET and MDL, respectively,
+that were computed from table 1. The results of table 1 were computed
+from the standard 2D embedding (m=2, t=1) for low and high volatility
+windows. During calm periods, DET clusters around 0.75, and in turbulent
+windows, like the COVID 19 crash and 2022 correction, DET falls to a
+median of 0.72. An independent t-test confirms this that this reduction
+is significant (P&lt;0,02). In contrast, MDL increases from a median
+near 3.2 in low volatility to 3.5 in high volatility, with several
+outliers. This is also significant (p&lt;0.01). These shifts indicate
+that crises disrupt the predictability of return sequences while
+occasionally producing long, irregular repeating segments.</p>
+<div id="tab:det_mdl_comparison">
+<table>
+<caption>Comparison of RQA metrics between low‐ and high‐volatility
+windows. DET differentiates the groups more strongly.</caption>
+<thead>
+<tr>
+<th style="text-align: left;">Metric</th>
+<th style="text-align: center;"><span
+class="math inline"><em>t</em></span>‐value</th>
+<th style="text-align: center;"><span
+class="math inline"><em>p</em></span>‐value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DET</td>
+<td style="text-align: center;">-3.34</td>
+<td style="text-align: center;">0.001</td>
+</tr>
+<tr>
+<td style="text-align: left;">MDL</td>
+<td style="text-align: center;">-3.05</td>
+<td style="text-align: center;">0.003</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure id="fig:enter-label">
+<img src="module6_images/Screenshot 2025-05-13 at 19.46.57.png" style="width:30.0%" />
+<figcaption>Figure 1: Boxplot: 2D DET by volatility group</figcaption>
+</figure>
+<figure id="fig:enter-label">
+<img src="module6_images/Screenshot 2025-05-13 at 19.55.44.png" style="width:30.0%" />
+<figcaption>Figure 2: Boxplot: 2D MDL by volatility group</figcaption>
+</figure>
+<p>Figure 3 and 4 repeats the comparison of figure 1 and 2, but for 3D
+embedding of the same series. Here, DET 3D values are higher, around
+0.94 in calm regimes and drop slightly to 0.93 in turbulent times. The
+drop remains significant (p&lt;0.01). In the MDL plot, a likewise modest
+increase of the median in turbulent periods, from 5.2 to 5.5
+(p&lt;0,03), which illustrates richer embeddings capture deeper
+recurrent structure.</p>
+<div id="tab:rqa_3d_comparison">
+<table>
+<caption>Comparison of RQA metrics for the three-dimensional
+embedding.</caption>
+<thead>
+<tr>
+<th style="text-align: left;">Metric</th>
+<th style="text-align: center;"><span
+class="math inline"><em>t</em></span>-value</th>
+<th style="text-align: center;"><span
+class="math inline"><em>p</em></span>-value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DET (3D embedding, <span
+class="math inline"><em>m</em> = 3</span>, <span
+class="math inline"><em>τ</em> = 1</span>)</td>
+<td style="text-align: center;">0.20</td>
+<td style="text-align: center;">0.841</td>
+</tr>
+<tr>
+<td style="text-align: left;">MDL (3D embedding, <span
+class="math inline"><em>m</em> = 3</span>, <span
+class="math inline"><em>τ</em> = 1</span>)</td>
+<td style="text-align: center;">-2.44</td>
+<td style="text-align: center;">0.016</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure id="fig:enter-label">
+<img src="module6_images/Screenshot 2025-05-13 at 19.56.28.png" style="width:30.0%" />
+<figcaption>Figure 3: Boxplot: 3D DET by volatility group</figcaption>
+</figure>
+<figure id="fig:enter-label">
+<img src="module6_images/Screenshot 2025-05-13 at 19.57.09.png" style="width:30.0%" />
+<figcaption>Figure 4: Boxplot: 3D MDL by volatility group</figcaption>
+</figure>
+<p>Figure 5 shows an interactive 3D embedding plot of
+the averages return series (m=3, t=1), colored by time index.
+Early-period points appear as a compact cluster, mid-crash points
+migrate into new regions of phase space and late period points settle
+into a different cluster.</p>
+<figure id="fig:enter-label">
+<iframe src="module6_images/Interactive 3D Embedding with time legend.html" width="700" height="600" scrolling="no"></iframe>
+<figcaption>Figure 5: Interactive 3D embedding with time
+legend</figcaption>
+</figure>
+<p>Finally, figure 6 shows a down-samples recurrence plot for the
+average of the five z-scored return series. Every fith point in the
+series with a RR of 5%. The thick diagonal confirms self-matches. But
+off-diagonal bands reveal repeating patterns: dense, parallel lines
+before index 50, fragmentation and space recurrence in the crash window
+of the COVID 19 crash (around 75-125) and the reemergence of the
+diagonal stripes in the recovery phase(150-200).</p>
+<figure id="fig:enter-label">
+<img src="module6_images/screenshot mooi blaadje.png" style="width:30.0%" />
+<figcaption>Figure 6: Down sampled recurrence plot for average series</figcaption>
+</figure>
+<h1 id="discussion">Discussion</h1>
+<p>Recurrence analysis reveals that financial return series alternate
+between regimes of strong memory and predictability in calm markets and
+episodes of turbulent, irregular behavior during crises. The significant
+drop in DET and simultaneous rise in MDL during high-volatility windows
+indicates that the price paths lose their stable, recurrent patterns
+when crashes occur, yet the few remaining recurrences sometimes stretch
+into long segments. The 3D embedding reduces some of the noise. DET
+remains high even in turbulent periods. Visually, the down-sampled
+recurrence plots and the colored 3D path make these shifts visible.
+Dense, parallel diagonals in calm phases come after fragmented points in
+crashes, then re-form into a parallel diagonal when the markets
+recover.</p>
+<p>These findings fit within the framework of complex systems.
+Recurrence captures the market’s ability to revisit prior states, and
+shows how memeory fades and then partially returns around major shifts.
+The choice of embedding parameters, window length, and recurrence
+threshold all influence the sensitivity to these dynamics, highlighting
+the need for careful parameter selection and sensitivity analysis.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>By appling recurrence quantification and time-delay embedding to
+daily return series, this module has shown that financial markets
+exhibit clear signatures of memory and predictability in calm regimes
+and marked disruption during crisis. Statistics like DET and MDL provide
+quantitative markers of these shifts, while recurrence plots and 3D
+embeddings offer visual prove. This module demonstrates the power of RQA
+as a tool for uncovering hidden structure in complex economic data. In
+short, RQA reveals the financial market’s patterns of memory and
+unpredictability across calm and turbulent regimes, highlighting its
+power for understanding and anticipating complex system dynamics.</p>
+
+<h1 id="references">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent"
+data-entry-spacing="0" role="list">
+<div id="ref-eckmann1987recurrence" class="csl-entry" role="listitem">
+Eckmann, J.-P., S. O. Kamphorst, and D. Ruelle. 1987. <span>“Recurrence
+Plots of Dynamical Systems.”</span> <em>Europhysics Letters</em> 4 (9):
+973–77.
+</div>
+<div id="ref-fabretti2004recurrence" class="csl-entry" role="listitem">
+Fabretti, Alessandro, and Marcel Ausloos. 2004. <span>“Recurrence Plot
+and Recurrence Quantification Analysis Techniques for Detecting a
+Critical Regime: Examples from Financial Market Indices.”</span>
+<em>International Journal of Modern Physics C</em> 15 (10): 1373–84.
+</div>
+<div id="ref-iveeaten3223times_massive_yahoo_finance_dataset"
+class="csl-entry" role="listitem">
+iveeaten3223times. 2019. <span>“Massive Yahoo Finance Dataset.”</span>
+Kaggle, <a
+href="https://www.kaggle.com/datasets/iveeaten3223times/massive-yahoo-finance-dataset"
+class="uri">https://www.kaggle.com/datasets/iveeaten3223times/massive-yahoo-finance-dataset</a>.
+</div>
+<div id="ref-marwan2007recurrence" class="csl-entry" role="listitem">
+Marwan, Norbert, M. C. Romano, M. Thiel, and Jürgen Kurths. 2007.
+<span>“Recurrence Plots for the Analysis of Complex Systems.”</span>
+<em>Physics Reports</em> 438 (5–6): 237–329.
+</div>
+<div id="ref-piskun2011recurrence" class="csl-entry" role="listitem">
+Piskun, Olga, and Sergey Piskun. 2011. <span>“Recurrence Quantification
+Analysis of Financial Market Crashes and Crises.”</span> <em>Physica A:
+Statistical Mechanics and Its Applications</em> 390 (11): 2109–20.
+</div>
+<div id="ref-zbilut1992embeddings" class="csl-entry" role="listitem">
+Zbilut, J. P., and C. L. Jr. Webber. 1992. <span>“Embeddings and Delays
+as Derived from Quantification of Recurrence Plots.”</span> <em>Physics
+Letters A</em> 171 (3–4): 199–203.
+</div>
+</div>
+</div>
+
+        
+
+                <div class="dataset-description">
+            <div id="comments"></div>
+        </div>
+    </main>
+
+    <div id="footer"></div>
+</body>
+</html>
