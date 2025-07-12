@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Item 1</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="templateLoader.js"></script>
+    <script src="comments.js"></script>
+</head>
+<body>
+    <div id="header"></div>
+    <div id="nav"></div>
+
+    <div class="dataset-description">
+        <h2>Blog Explanation</h2>
+    <section>
+        <p>This blog has eight different posts which each cover a different aspect of the Complex Systems course. </p>
+        <p>Each blog post provides an in-depth look into the different modules covered in the course, giving an insight into the application of these methods to real-world data.</p>
+
+    </section>
+</div>
+
+    <!-- Dataset Description -->
+    <div class="dataset-description">
+            <h2>Data Description</h2>
+        <section>
+            <p>The dataset used for this ePortfolio is the Kaggle <i>"Massive Yahoo Finance Dataset"</i> created by <cite><a href="https://www.kaggle.com/datasets/iveeaten3223times/massive-yahoo-finance-dataset" target="_blank">Yahoo Finance Dataset</a></cite>. The data was collected from Yahoo Finance and includes the top 500 companies by market capitalisation from 29 November 2018 to 29 November 2023. In total, this dataset consists of more than 600,000 records, with each row representing a trading day for one of the companies. The data is structured as a multivariate time series, since it tracks multiple variables over time for each company. It shows how the companies performed on a daily basis. The dataset includes the following attributes:</p>
+            
+            <ul>
+                <li><strong>Date:</strong> The date on which the stock price data was recorded.</li>
+                <li><strong>Open:</strong> The price of the stock when the selected stock opened on this date.</li>
+                <li><strong>High:</strong> The highest price of the stock on this date.</li>
+                <li><strong>Low:</strong> The stock's lowest price on this date.</li>
+                <li><strong>Close:</strong> The price of the stock when the stock marked closed on this date.</li>
+                <li><strong>Volume:</strong> The number of stocks traded on this date.</li>
+                <li><strong>Dividends:</strong> Dividend payments made by the company on this date (if applicable).</li>
+                <li><strong>Stock Splits:</strong> Information on any stock splits that have occurred on that date.</li>
+                <li><strong>Company:</strong> The name of the company of which the data is.</li>
+            </ul>
+    
+            <p>This provided a time series x(t) of the stock's price. No smoothing or detrending was applied in order to preserve the intrinsic dynamics. Using a single stock's price as the observable means we are examining a one-dimensional projection of the market's state. While this is a simplification (the real system has many variables), it offers a tractable way to apply nonlinear dynamics tools and see if any low-dimensional patterns emerge.</p>
+        </section>
+    </div>
+
+
+
+    <!-- Blog Modules -->
+    <main class="portfolio-summary">
+        <div class="portfolio-item">
+            <a href="module3.html">
+                <img src="main_images/module3.png" alt="Module 3">
+                <h2 style="text-align: center">Self-Organization & Emergence in The Stock Market</h2>
+                <!-- <p>Module 3</p> -->
+            </a>
+        </div>
+
+        <div class="portfolio-item">
+            <a href="module4.html">
+                <img src="main_images/module4.png" alt="Module 4">
+                <h2 style="text-align: center">Uncovering Complex Dynamics</h2>
+                <!-- <p>Module 4</p> -->
+            </a>
+        </div>
+
+        <div class="portfolio-item">
+            <a href="module5.html">
+                <img src="main_images/module5.png" alt="Module 5">
+                <h2 style="text-align: center">Phase Space Reconstruction & The Stock Market</h2>
+                <!-- <p>Module 5</p> -->
+            </a>
+        </div>
+
+        <div class="portfolio-item">
+            <a href="module6.html">
+                <img src="main_images/module6.png" alt="Module 6">
+                <h2 style="text-align: center">RQA in The Stock Market</h2>
+                <!-- <p>Module 6</p> -->
+            </a>
+        </div>
+
+        <div class="portfolio-item">
+            <a href="module7.html">
+                <img src="main_images/module7.png" alt="Module 7">
+                <h2 style="text-align: center">Sample Entropy & The Stock Market</h2>
+                <!-- <p>Module 7</p> -->
+            </a>
+        </div>
+
+        <div class="portfolio-item">
+            <a href="module9.html">
+                <img src="main_images/module9.png" alt="Module 9">
+                <h2 style="text-align: center">Multivariate Coordination in The Stock Market</h2>
+                <!-- <p>Module 9</p> -->
+            </a>
+        </div>
+
+        <div class="portfolio-item">
+            <a href="module11.html">
+                <img src="main_images/module11.png" alt="Module 11">
+                <h2 style="text-align: center">Multifractal Analysis of The Stock Market</h2>
+                <!-- <p>Module 11</p> -->
+            </a>
+        </div>
+
+        <div class="portfolio-item">
+            <a href="module12.html">
+                <img src="main_images/module12.png" alt="Module 12">
+                <h2 style="text-align: center">Entropy as a Lens on Stock Market Behavior</h2>
+                <!-- <p>Module 12</p> -->
+            </a>
+        </div>
+    </main>
+
+    <div id="footer"></div>
+</body>
+</html>
