@@ -1,0 +1,108 @@
+---
+title: "Phase Space Reconstruction Amazon stock data"
+author: "Evan Kemmer"
+date: "16-05-2025"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load the required packages
+```{r message=FALSE, warning=FALSE}
+require(nonlinearTseries)
+require(crqa)
+require(casnet)
+require(tseriesChaos)
+require(plot3D)
+require(scatterplot3d)
+require(rgl)
+require(ggplot2)
+require(Hmisc)
+
+# Turn off scientific notation
+options(scipen=999)
+```
+
+```{r}
+# Read in and convert Date
+data <- read.csv("stock_details_5_years.csv", stringsAsFactors = FALSE)
+data$Date <- as.Date(data$Date, format = "%Y-%m-%d") 
+
+# Filter for Amazon
+amzn <- subset(data, Company == "AMZN")
+
+# Base-R plot with dates on x-axis
+plot(
+  amzn$Date, amzn$Close, type = "l",
+  xlab = "Date", ylab = "Closing price in dollars ($)",
+  main = "Closing stock price of Amazon",
+  ylim = c(0, 300)
+)
+```
+
+```{r}
+# First check the acf
+tau.acf <- timeLag(amzn$Close, technique = "acf", lag.max = 250, do.plot = T)
+print(tau.acf)
+```
+
+```{r}
+tau.ami <- timeLag(amzn$Close, technique = "ami", lag.max = 250, do.plot = T)
+print(tau.ami)
+```
+
+```{r}
+# Using False Nearest Neighbors
+fnn.out = false.nearest(amzn$Close, m = 15, d = tau.ami, t = 50, eps = sd(amzn$Close)/10 )
+plot(fnn.out)
+```
+
+```{r}
+# Using Cao's method
+emb.dim = estimateEmbeddingDim(amzn$Close, time.lag = tau.ami, max.embedding.dim = 15)
+print(emb.dim)
+```
+
+```{r}
+# Reconstruct the attractor
+takens <- buildTakens(
+  trace_amzn$Close,
+  embedding.dim = emb.dim,
+  time.lag       = tau.ami
+)
+
+# Draw the space–time separation plot
+# number.time.steps is the max temporal separation to inspect
+stp.obj <- spaceTimePlot(
+  takens,
+  number.time.steps = 200,
+  do.plot            = TRUE,
+  main               = "Space–Time Separation Plot"
+)  
+
+# Pull out the contour‐line matrix
+contours <- getContourLines(stp.obj)
+
+# Sum over all percentiles to get a single “joint radius” curve
+jointRadius <- colSums(contours)
+
+# Identify local maxima: where the second‐difference changes sign from + to –
+localMaxima <- which(diff(sign(diff(jointRadius))) == -2) + 1
+
+# Pick the first such maximum as your Theiler window
+theilerWindow <- localMaxima[1]
+
+```
+
+```{r}
+amzn.ps <- buildTakens(trace_amzn$Close,emb.dim,tau.ami)
+head(amzn.ps, n=12)
+```
+```{r}
+lines3D(amzn.ps[,1],amzn.ps[,2],amzn.ps[,3], t="l", col="blue", asp=1)
+scatterplot3d(amzn.ps[,1],amzn.ps[,2],amzn.ps[,3],pch=20, color = "blue")
+plot3d(amzn.ps[,1],amzn.ps[,2],amzn.ps[,3],col = 'blue', size=3)
+```
+

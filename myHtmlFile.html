@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>main</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for citations */
+    div.csl-bib-body { }
+    div.csl-entry {
+      clear: both;
+      margin-bottom: 0em;
+    }
+    .hanging-indent div.csl-entry {
+      margin-left:2em;
+      text-indent:-2em;
+    }
+    div.csl-left-margin {
+      min-width:2em;
+      float:left;
+    }
+    div.csl-right-inline {
+      margin-left:2em;
+      padding-left:1em;
+    }
+    div.csl-indent {
+      margin-left: 2em;
+    }  </style>
+</head>
+<body>
+<h1 id="introduction-to-phasespace-reconstruction">Introduction to
+Phase–Space Reconstruction</h1>
+<p>When you record a single signal from a complex dynamical system, say,
+the closing price of a stock over time, you’re capturing only one
+“shadow” of the system’s full behavior. Yet many of the commonly used
+tools of nonlinear dynamics (e.g., Lyapunov exponents, fractal
+dimensions, recurrence plots) require access to the system’s <em>state
+space</em>, where each axis represents one of its degrees of freedom.
+<em>Phase Space Reconstruction</em> is the tool that lets you rebuild a
+high-dimensional picture of the system from just that one time
+series.</p>
+<h2 id="delay-embedding">Delay Embedding</h2>
+<p>The simplest and most widely used approach is <em>delay
+embedding</em>, where you convert your scalar series <span
+class="math inline"><em>x</em>(<em>t</em>)</span> into vectors of the
+form <span
+class="math display"><strong>X</strong>(<em>t</em>) = [<em>x</em>(<em>t</em>), <em>x</em>(<em>t</em> + <em>τ</em>), <em>x</em>(<em>t</em> + 2<em>τ</em>), …, <em>x</em>(<em>t</em> + (<em>m</em> − 1)<em>τ</em>)].</span>
+Here:</p>
+<ul>
+<li><p><span class="math inline"><em>m</em></span> is the <em>embedding
+dimension</em>: how many past values you stack together.</p></li>
+<li><p><span class="math inline"><em>τ</em></span> is the <em>time
+delay</em>: how far apart in time those samples are.</p></li>
+</ul>
+<p>By applying this window to the data, you generate a set of points in
+<span class="math inline">ℝ<sup><em>m</em></sup></span>, which can
+approximate the structure of the system’s underlying attractor.</p>
+<h2 id="takens-theorem">Takens’ Theorem</h2>
+<p>Takens’ theorem tells us that, under mild conditions, you can rebuild
+the full behavior of a system from just one observed signal by creating
+vectors of delayed values. If the system’s true dynamics live in a <span
+class="math inline"><em>d</em></span>-dimensional space, then using at
+least <span class="math inline"><em>m</em> = 2<em>d</em> + 1</span>
+delayed samples guarantees that the cloud of points in <span
+class="math inline">ℝ<sup><em>m</em></sup></span> will reflect the
+original system’s structure, allowing you to study its geometry and
+dynamics from a single time series.</p>
+<h2 id="practical-workflow">Practical Workflow</h2>
+<ol>
+<li><p><strong>Choose a delay <span
+class="math inline"><em>τ</em></span>:</strong><br />
+Use the Autocorrelation Function (ACF) or Average Mutual Information
+(AMI) to find a delay where successive coordinates carry new
+information.</p></li>
+<li><p><strong>Determine embedding dimension <span
+class="math inline"><em>m</em></span>:</strong><br />
+Apply False Nearest Neighbors or Cao’s method to reveal the smallest
+<span class="math inline"><em>m</em></span> where the attractor unfolds
+without self-overlap.</p></li>
+<li><p><strong>Visualize and analyze:</strong> Perform the Phase Space
+Reconstruction and plot.</p></li>
+<li><p><strong>Subsequent analyses:</strong><br />
+Recurrence plots, estimate Lyapunov exponents, and more.</p></li>
+</ol>
+<p>By following these steps, you can turn a single time series into a
+useful representation of the system’s hidden dynamics. In the next
+sections, we’ll show how to choose a suitable delay <span
+class="math inline"><em>τ</em></span>, determine the right embedding
+dimension <span class="math inline"><em>m</em></span>, and implement the
+full reconstruction in R so you can determine the system’s geometric and
+dynamical properties from your data.</p>
+<h1 id="required-libraries">Required Libraries</h1>
+<p>To perform our analysis, we load several R libraries:</p>
+<pre><code>library(nonlinearTseries)
+library(crqa)
+library(casnet)
+library(tseriesChaos)
+library(plot3D)
+library(scatterplot3d)
+library(rgl)
+library(ggplot2)
+library(Hmisc)</code></pre>
+<h1 id="loading-and-filtering-data">Loading and Filtering Data</h1>
+<p>To start, we will load our data set and take the stock market metrics
+from Amazon (AMZN), pulled from the ’Massive Yahoo Finance Dataset’.
+This data was measured from 29-11-2018 to 29-11-2023, between which the
+stock exchange was open for 1258 days. This company was chosen since it
+operates within the retail domain, which is known to have seasonal
+fluctuations <span class="citation"
+data-cites="buckley2024seasonalstocks">(Buckley 2024)</span>, making it
+potentially more interesting for our analysis. However, the code can be
+easily adjusted to any of the companies in the dataset.</p>
+<pre><code># Load data set
+data &lt;- read.csv(&quot;stock_details_5_years.csv&quot;)
+
+# Filter for specific company
+amzn &lt;- data[data$Company == &quot;AMZN&quot;, ]</code></pre>
+<p>Let us first look at the stock market metrics of Amazon, specifically
+the closing price of the stock on any given day (Figure 1).</p>
+<pre><code># Plot the x and y series with y-axis from 0 to 300
+plot(amzn$Close, 
+  type = &#39;l&#39;, 
+  xlab = &quot;Time point&quot;, 
+  ylab = &quot;Closing price in dollars ($)&quot;,
+  main = &quot;Stock development of Amazon and Walmart&quot;, 
+  ylim = c(0, 300))
+legend(&quot;topright&quot;, legend = c(&quot;Amazon&quot;, &quot;Walmart&quot;), col = c(&quot;black&quot;, &quot;red&quot;), lty = 1)</code></pre>
+<figure id="fig:Closing Prices">
+<img src="closing stock.png" style="width:100.0%" />
+<figcaption>Amazon closing stock prices</figcaption>
+</figure>
+<h1 id="determine-the-time-delay-tau">Determine the time delay <span
+class="math inline"><em>τ</em></span></h1>
+<p>To determine an appropriate time delay <span
+class="math inline"><em>τ</em></span> we will be looking at two methods:
+the Autocorrelation Function (ACF) and the Average Mutual Information
+(AMI) function.</p>
+<h2 id="autocorrelation-function-acf">Autocorrelation Function
+(ACF)</h2>
+<p>The Autocorrelation Function (ACF) measures the linear correlation
+between a time series <span
+class="math inline"><em>x</em>(<em>t</em>)</span> and a time‐shifted
+version <span
+class="math inline"><em>x</em>(<em>t</em> + <em>k</em>)</span> for
+various lags <span class="math inline"><em>k</em></span>, providing a
+quantitative view of how past values influence future ones. By plotting
+the ACF against lag <span class="math inline"><em>k</em></span>, you can
+identify repeating cycles, characteristic decay rates, and the point at
+which the series loses memory of its past. This information is needed
+for selecting an appropriate delay <span
+class="math inline"><em>τ</em></span>.</p>
+<pre><code># Determine the ACF
+tau.acf &lt;- timeLag(
+  amzn$Close,
+  technique = &quot;acf&quot;,
+  lag.max   = 250,
+  do.plot   = TRUE
+)</code></pre>
+<p>The ACF for the AMZN closing price is shown in Figure 2. The ACF
+gives an optimal delay of 160 time points. This can be identified by the
+point where the lag results in an ACF that is below ... (green dotted
+line), which is common practice.</p>
+<figure id="fig:acf">
+<img src="acf.png" style="width:100.0%" />
+<figcaption>Autocorrelation Function (ACF) of AMZN stock</figcaption>
+</figure>
+<h2 id="average-mutual-information-ami">Average Mutual Information
+(AMI)</h2>
+<p>The Average Mutual Information (AMI) quantifies the shared
+information between a time series <span
+class="math inline"><em>x</em>(<em>t</em>)</span> and its time‐shifted
+counterpart <span
+class="math inline"><em>x</em>(<em>t</em> + <em>k</em>)</span> for
+various lags <span class="math inline"><em>k</em></span>, capturing both
+linear and nonlinear dependencies. By plotting AMI against lag <span
+class="math inline"><em>k</em></span>, you can detect the first local
+minimum where successive samples become sufficiently independent, making
+it a reliable indicator for selecting an appropriate delay <span
+class="math inline"><em>τ</em></span>.</p>
+<pre><code># Determine the AMI
+tau.ami &lt;- timeLag(
+  amzn$Close, 
+  technique = &quot;ami&quot;, 
+  lag.max = 250, 
+  do.plot = True)
+print(tau.ami)</code></pre>
+<p>The AMI for the AMZN closing price is shown in Figure 3. This can
+again be identified by the point where the lag results in a AMI that is
+below ..., which is 33.</p>
+<figure id="fig:ami">
+<img src="ami.png" style="width:100.0%" />
+<figcaption>Average Mutual Information (AMI) of AMZN stock</figcaption>
+</figure>
+<h2 id="choosing-the-right-time-delay">Choosing the right time
+delay</h2>
+<p>The ACF and AMI often yield different delays, and higher <span
+class="math inline"><em>τ</em></span> values imply more "skipped" data.
+Balancing the system’s time scale and the need for independent
+coordinates, we choose <span class="math inline"><em>τ</em> = 33</span>.
+A <span class="math inline"><em>τ</em></span> of 160 would simply be too
+large of a delay to capture the repeating patterns, as more data would
+get skipped.</p>
+<h1 id="determine-the-number-of-dimensions">Determine the number of
+dimensions</h1>
+<p>To determine the appropriate number of dimensions, we also use two
+different methods: the False Nearest Neighbor method and Cao’s
+method.</p>
+<h2 id="false-nearest-neighbor-method">False Nearest Neighbor
+Method</h2>
+<p>The False Nearest Neighbor (FNN) method estimates the minimum
+embedding dimension <span class="math inline"><em>m</em></span> by
+detecting when increasing <span class="math inline"><em>m</em></span> no
+longer reduces the fraction of "false" neighbors. False neighbors are
+points that appear close in low dimensions only because of projection
+overlap rather than true dynamical proximity <span class="citation"
+data-cites="kennel1992determining">(Kennel, Brown, and Abarbanel
+1992)</span>. As <span class="math inline"><em>m</em></span> increases,
+the percentage of false neighbors should drop toward zero once the
+attractor is fully unfolded.</p>
+<p>First, we find an appropriate Theiler window. The code reconstructs
+the phase‐space attractor with delay <span
+class="math inline"><em>τ</em></span> and dimension <span
+class="math inline"><em>m</em></span>, then builds a space–time
+separation plot over a range of lags. This shows how the temporal
+distance between pairs of data points affects their spatial distance on
+the reconstructed attractor. The Theiler window can then be chosen as
+the first point where the size is large enough to exclude points where
+temporal distance affects the spatial distance.</p>
+<pre><code># 1) Reconstruct the attractor
+takens &lt;- buildTakens(
+  amzn$Close,
+  embedding.dim = emb.dim,
+  time.lag       = tau.ami
+)
+
+# 2) Draw the space-time seperation plot
+#    number.time.steps is the max temporal separation to inspect
+stp.obj &lt;- spaceTimePlot(
+  takens,
+  number.time.steps = 200,
+  do.plot            = TRUE,
+  main               = &quot;Space-Time Separation Plot&quot;
+) 
+
+# 3) Pull out the contour-line matrix
+contours &lt;- getContourLines(stp.obj)
+
+# 4) Sum over all percentiles to get a single &quot;joint radius&quot; curve
+jointRadius &lt;- colSums(contours)
+
+# 5) Identify local maxima
+localMaxima &lt;- which(diff(sign(diff(jointRadius))) == -2) + 1
+
+# 6) Pick the first such maximum as your Theiler window
+theilerWindow &lt;- localMaxima[1]</code></pre>
+<figure id="fig:theiler">
+<img src="theiler.png" style="width:100.0%" />
+<figcaption>Space-Time separation plot to determine the appropriate
+Theiler window.</figcaption>
+</figure>
+<p>This analysis gives a Theiler Window of 41. We can then insert this
+into the code below, that gives us the minimum embedding dimension using
+the FNN method.</p>
+<pre><code># Estimate false nearest neighbors for embedding dimensions up to 15
+fnn.out &lt;- false.nearest(
+  amzn$Close,       # time series
+  m   = 15,               # max embedding dimension to test
+  d   = tau.ami,          # time delay (from AMI)
+  t   = 41,               # Theiler window 
+  eps = sd(amzn$Close) / 10  # neighborhood radius
+)
+plot(fnn.out, main = &quot;False Nearest Neighbors for AMZN Closing Prices&quot;)</code></pre>
+<figure id="fig:fnn">
+<img src="fnn.png" />
+<figcaption>Fraction of false nearest neighbors as a function of
+embedding dimension for the AMZN closing‐price series. The recommended
+embedding dimension is where the curve first reaches (or nearly reaches)
+zero.</figcaption>
+</figure>
+<p>In Figure <a href="#fig:fnn" data-reference-type="ref"
+data-reference="fig:fnn">5</a>, note that the percentage of false
+neighbors rises to nearly 100 percent, which is not what we would like
+to see. Some studies have shown that FNN is not always suitable for any
+application, especially when the data is rather noisy <span
+class="citation" data-cites="rhodes1997false">(Rhodes and Morari
+1997)</span>, which our data certainly is. For our purposes, we will be
+using Cao’s method.</p>
+<h2 id="caos-method">Cao’s Method</h2>
+<p>Cao’s method estimates the minimum embedding dimension by examining
+how nearest‐neighbor distances change as the dimension increases. For
+each candidate dimension <span class="math inline"><em>m</em></span>, it
+computes the ratio <span
+class="math inline"><em>E</em>1(<em>m</em>)</span> of the average
+distance in <span class="math inline"><em>m</em> + 1</span> dimensions
+to that in <span class="math inline"><em>m</em></span> dimensions. When
+<span class="math inline"><em>E</em>1(<em>m</em>)</span> stabilizes near
+1, adding further dimensions no longer reveals new structure, indicating
+that <span class="math inline"><em>m</em></span> is sufficient. A
+secondary statistic <span
+class="math inline"><em>E</em>2(<em>m</em>)</span> helps distinguish
+deterministic signals from stochastic noise.</p>
+<pre><code># Using Cao&#39;s method
+emb.dim = estimateEmbeddingDim(amzn$Close, time.lag = tau.ami, max.embedding.dim = 15)
+print(emb.dim)</code></pre>
+<p>Cao’s method yields a minimum embedding dimension of 7, as this is
+the point where E1(d) enters into the threshold of 1 (and remains
+there). We will be using this value as the embedding dimension in the
+next section.</p>
+<figure id="fig:ami">
+<img src="cao.png" style="width:100.0%" />
+<figcaption aria-hidden="true"></figcaption>
+</figure>
+<h1 id="visualize-and-analyze">Visualize and analyze</h1>
+<p>As a result of the previous two sections, we have a delay value <span
+class="math inline"><em>τ</em></span> of 33 and a minimum embedding
+dimension <span class="math inline"><em>m</em></span> of 7. We can now
+do our Phase Space Reconstruction using the ’buildTakens’ function.</p>
+<pre><code># Phase Space Reconstruction
+amzn.ps &lt;- buildTakens(amzn$Close,emb.dim,tau.ami)
+head(amzn.ps, n=12)</code></pre>
+<p>....Matrix</p>
+<p>You can see there are seven columns since our embedding dimension is
+7. We can now try to plot the Phase Space Reconstruction that we end up
+with. Unfortunately, we don’t have any way of visualizing a plot of 7
+dimensions. We can however, plot the first three dimensions. We will
+plot in 3D using lines, and plot an interactive 3D scatter plot.</p>
+<pre><code># Plot first three dimensions of Phase Space Reconstruction
+lines3D(amzn.ps[,1],amzn.ps[,2],amzn.ps[,3], t=&quot;l&quot;, col=&quot;blue&quot;, asp=1)
+plot3d(amzn.ps[,1],amzn.ps[,2],amzn.ps[,3],col = &#39;blue&#39;, size=3)</code></pre>
+<figure id="fig:ami">
+<img src="3dlines.png" style="width:100.0%" />
+<figcaption>The first three dimensions of the Phase Space Reconstruction
+of the Amazon closing stock price</figcaption>
+</figure>
+<h1 id="subsequent-analyses">Subsequent Analyses</h1>
+<p>Now that we have reconstructed the state‐space, we can apply a range
+of empirical dynamic modeling (EDM) tools to probe different aspects of
+the system’s behavior. For instance:</p>
+<ul>
+<li><p><strong>Simplex projection:</strong> Uses nearest‐neighbor
+forecasting in the reconstructed attractor to</p>
+<ul>
+<li><p>assess short‐term predictability</p></li>
+<li><p>validate the chosen embedding dimension.</p></li>
+</ul></li>
+<li><p><strong>S-Map:</strong> Fits locally weighted linear models at
+each point in state‐space to</p>
+<ul>
+<li><p>quantify the degree of nonlinearity</p></li>
+<li><p>extract time‐varying interaction coefficients.</p></li>
+</ul></li>
+<li><p><strong>Convergent Cross Mapping (CCM):</strong> Tests for causal
+coupling by checking whether the attractor reconstructed from one
+variable can reliably predict the states of another.</p></li>
+</ul>
+<h1 id="conclusion">Conclusion</h1>
+<p>In this module, we have demonstrated how to recover the hidden
+dynamics of a complex system from a single time series by means of
+phase–space reconstruction. Starting from Takens’ embedding theorem, we
+selected an appropriate time delay (<span
+class="math inline"><em>τ</em> = 33</span>) by comparing the
+autocorrelation function and average mutual information, and determined
+a minimal embedding dimension (<span
+class="math inline"><em>m</em> = 7</span>) using Cao’s method. With
+these parameters we reconstructed the Amazon closing‐price attractor and
+visualized its first three coordinates.</p>
+<p>Having reconstructed the state‐space, we are now equipped to apply a
+suite of empirical dynamic modeling tools, such as recurrence analysis,
+Lyapunov‐exponent estimation, simplex forecasting, S–Map, and convergent
+cross mapping. By transforming a single financial time series into a
+multidimensional portrait of the system, phase–space reconstruction
+opens the door to richer insights into market behavior and other complex
+systems.</p>
+<div id="refs" class="references csl-bib-body hanging-indent"
+data-entry-spacing="0" role="list">
+<div id="ref-buckley2024seasonalstocks" class="csl-entry"
+role="listitem">
+Buckley, Dan. 2024. <span>“<span>Seasonal Stocks</span>.”</span> March
+30, 2024. <a
+href="https://www.daytrading.com/seasonal-stocks">https://www.daytrading.com/seasonal-stocks</a>.
+</div>
+<div id="ref-kennel1992determining" class="csl-entry" role="listitem">
+Kennel, Matthew B, Reggie Brown, and Henry DI Abarbanel. 1992.
+<span>“Determining Embedding Dimension for Phase-Space Reconstruction
+Using a Geometrical Construction.”</span> <em>Physical Review A</em> 45
+(6): 3403.
+</div>
+<div id="ref-rhodes1997false" class="csl-entry" role="listitem">
+Rhodes, Carl, and Manfred Morari. 1997. <span>“False-Nearest-Neighbors
+Algorithm and Noise-Corrupted Time Series.”</span> <em>Physical Review
+E</em> 55 (5): 6162.
+</div>
+</div>
+</body>
+</html>
